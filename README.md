@@ -1,4 +1,4 @@
-# Freelance exchange.
+# Freelance exchange
 The web site that helps students to complete different tasks and help each other.
 
 ## Members
