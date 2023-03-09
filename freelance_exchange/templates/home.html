@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="content">
+    {% for profile in profiles %}
+            <div class="item">
+                <p>{{profile}}<p>
+            </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}
