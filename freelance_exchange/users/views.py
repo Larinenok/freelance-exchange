@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from rest_framework.authtoken.models import Token
+
 from .models import *
 
 
@@ -12,13 +14,14 @@ def get_client_ip(request):
 
 
 def home_view(request):
-    profiles = CustomUser.objects.all()
+    profiles = []
+
+    for user in CustomUser.objects.all():
+        profiles.append({ 'user' : user, 'token' : Token.objects.get_or_create(user=user)[0] })
 
     context = {
         'profiles' : profiles,
     }
-    for p in profiles:
-        print(p.photo)
 
     return render(request, 'home.html', context)
 

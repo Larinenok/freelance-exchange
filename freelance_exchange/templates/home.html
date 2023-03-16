@@ -4,9 +4,14 @@
 
 <div class="content">
     {% for profile in profiles %}
-            <div class="item">
-                <p>{{profile}}<p>
-            </div>
+        <div class="item">
+            <p>username - {{profile.user}}</p>
+            <p>email - {{profile.user.email}}</p>
+            <p>description - {{profile.user.description}}</p>
+            <p>language - {{profile.user.language}}</p>
+            <p>token - {{profile.token}}</p>
+            <br>
+        </div>
     {% endfor %}
 </div>
 
