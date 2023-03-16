@@ -28,9 +28,8 @@ class Star(models.Model):
 
 
 class CustomUser(AbstractUser):
-    token = models.CharField(max_length=100, default='')
-    photo = models.ImageField(upload_to="photos/%Y/%m/%d/", null=True)
-    description = models.TextField(default='')
+    photo = models.ImageField(upload_to="photos/%Y/%m/%d/", default='default/default.jpg', blank=True, null=True)
+    description = models.TextField(default='', blank=True)
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
     views = models.ManyToManyField(Ip, blank=True)
     stars_freelancer = models.ForeignKey(Star, related_name='stars_freelancer', blank=True, on_delete=models.CASCADE, null=True)

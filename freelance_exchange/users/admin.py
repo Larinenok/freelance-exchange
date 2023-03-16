@@ -12,6 +12,9 @@ class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ('username', 'email',)
 
+CustomUserAdmin.fieldsets += (('Extra Fields', {'fields': (
+                                       'photo', 'description', 'language', 'views', 'stars_freelancer', 'stars_customer',
+                                   )}),)
 
 admin.site.register(Ip)
 admin.site.register(Star)
