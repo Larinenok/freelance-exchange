@@ -1,9 +1,12 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import AbstractUser
 from rest_framework.authtoken.models import Token
+from django.utils.text import slugify
 
 class Ip(models.Model):
     ip = models.CharField(max_length=100)
@@ -28,12 +31,14 @@ class Star(models.Model):
 
 
 class CustomUser(AbstractUser):
-    photo = models.ImageField(upload_to="photos/%Y/%m/%d/", default='default/default.jpg', blank=True, null=True)
-    description = models.TextField(default='', blank=True)
-    language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
-    views = models.ManyToManyField(Ip, blank=True)
-    stars_freelancer = models.ForeignKey(Star, related_name='stars_freelancer', blank=True, on_delete=models.CASCADE, null=True)
-    stars_customer = models.ForeignKey(Star, related_name='stars_customer', blank=True, on_delete=models.CASCADE, null=True)
+    username = models.CharField(max_length=15, unique=True, verbose_name='Логин')
+    slug = models.SlugField(max_length=15, unique=True, null=True, verbose_name='Slug')
+    photo = models.ImageField(upload_to="photos/%Y/%m/%d/", default='default/default.jpg', blank=True, verbose_name='Аватар')
+    description = models.TextField(default='', blank=True, verbose_name='Описание')
+    language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name='Язык')
+    views = models.ManyToManyField(Ip, blank=True, verbose_name='Просмотры профиля')
+    stars_freelancer = models.ForeignKey(Star, related_name='stars_freelancer', blank=True, on_delete=models.CASCADE, null=True, verbose_name='Оценка исполнителя')
+    stars_customer = models.ForeignKey(Star, related_name='stars_customer', blank=True, on_delete=models.CASCADE, null=True, verbose_name='Оценка заказчика')
 
     def __str__(self):
         return self.username
@@ -41,7 +46,7 @@ class CustomUser(AbstractUser):
     class Meta:
         verbose_name = 'Пользователи'
         verbose_name_plural = 'Пользователи'
-        ordering = ['username']
+        ordering = ['username', 'password']
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
