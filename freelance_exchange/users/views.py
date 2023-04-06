@@ -4,7 +4,7 @@ from .serializers import MyTokenObtainPairSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 # from django.contrib.auth.models import User
-from .serializers import RegisterSerializer
+from .serializers import RegisterSerializer, AdSerializer
 from rest_framework import generics
 
 from .models import *
@@ -31,11 +31,23 @@ def home_view(request):
 
     return render(request, 'home.html', context)
 
+def all_ads(request):
+    ads = []
+
+    for ad in Ad.objects.all():
+        ads.append({'ad': ad})
+
+    context = {
+        'ads': ads,
+    }
+    return render(request, 'user_ads.html', context)
 
 def profile(request, slug_name):
     user = get_object_or_404(CustomUser, slug=slug_name)
+    ads = Ad.objects.filter(author__slug=slug_name)
     context = {
         'profile': user,
+        'ads': ads,
         'token': Token.objects.get_or_create(user=user)[0],
     }
     return render(request, 'profile.html', context)
@@ -72,3 +84,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
+class AdList(generics.ListCreateAPIView):
+    queryset = Ad.objects.all()
+    serializer_class = AdSerializer

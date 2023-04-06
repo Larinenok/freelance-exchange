@@ -55,3 +55,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+class AdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ad
+        fields = ('id', 'title', 'description', 'category', 'budget', 'pub_date', 'contact_info')

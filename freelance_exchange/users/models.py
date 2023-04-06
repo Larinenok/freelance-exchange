@@ -12,7 +12,7 @@ class Ip(models.Model):
         return self.ip
 
     class Meta:
-        verbose_name = 'IP пользователей'
+        verbose_name = 'IP пользователя'
         verbose_name_plural = 'IP пользователей'
 
 
@@ -41,9 +41,25 @@ class CustomUser(AbstractUser):
         return self.username
 
     class Meta:
-        verbose_name = 'Пользователи'
+        verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ['username', 'password']
+class Ad(models.Model):
+    author = models.ForeignKey(CustomUser, verbose_name='Автор поста', blank=True, null=True, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.CharField(max_length=100)
+    budget = models.IntegerField()
+    pub_date = models.DateTimeField(auto_now_add=True)
+    contact_info = models.CharField(max_length=200)
+
+    class Meta:
+        verbose_name = 'Объявление'
+        verbose_name_plural = 'Объявления'
+
+    def __str__(self):
+        return self.title
+
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

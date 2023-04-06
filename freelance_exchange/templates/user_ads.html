@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="content">
+    {% for ad in ads %}
+        <div class="item">
+            <p>title - {{ad.ad}}</p>
+            <p>category - {{ad.ad.category}}</p>
+            <p>author - {{ad.ad.author}}</p>
+            <p>date - {{ad.ad.pub_date}}</p>
+            <p>description - {{ad.ad.description}}</p>
+            <p>budget - {{ad.ad.budget}}</p>
+            <p>contact - {{ad.ad.contact_info}}</p>
+            <br>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}

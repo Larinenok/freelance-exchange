@@ -19,14 +19,15 @@ from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
 from freelance_exchange import settings
-from users.views import home_view, profile
+from users.views import home_view, profile, all_ads
 
 urlpatterns = [
     path('', home_view),
     # path('api-token-auth/', views.obtain_auth_token),
     path('admin/', admin.site.urls),
     path('profile/<slug:slug_name>/', profile),
-    path('auth/', include('users.urls'))
+    path('auth/', include('users.urls')),
+    path('ads/', all_ads),
 ]
 
 if settings.DEBUG:

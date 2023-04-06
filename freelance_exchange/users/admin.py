@@ -17,7 +17,15 @@ class CustomUserAdmin(admin.ModelAdmin):
                                     'description', 'language', 'views', 'stars_freelancer', 'stars_customer',)}),)
     prepopulated_fields = {'slug': ('username',)}
 
+class AdAdmin(admin.ModelAdmin):
+    fieldsets = [
+        ("Title/category", {"fields": ["title", "category"]}),
+        ("Content", {"fields": ["description", "budget"]}),
+        ("Author", {"fields": ["author", "contact_info"]})
+    ]
+
 
 admin.site.register(Ip)
 admin.site.register(Star)
 admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Ad, AdAdmin)
