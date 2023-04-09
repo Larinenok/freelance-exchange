@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  django:
+    container_name: django
+    build: freelance_exchange
+    restart: on-failure
+    ports:
+      - '8181:8181'
+    volumes:
+      - '../app:/var/www/html'
+    links:
+      - 'db'
+
+  db:
+    container_name: db
+    image: postgres:15
+    expose:
+      - '5432'
+    env_file:
+      - 'freelance_exchange/.env'
+    volumes:
+      - './db:/var/lib/postgresql'
+
+  adminer:
+    container_name: adminer
+    image: adminer:4.8.1-standalone
+    restart: on-failure
+    ports:
+      - '8080:8080'
+    links:
+      - 'db'
