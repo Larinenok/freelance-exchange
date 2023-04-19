@@ -3,14 +3,34 @@ version: '3.8'
 services:
   django:
     container_name: django
-    build: freelance_exchange
+    build:
+      context: .
+      dockerfile: config/django/Dockerfile
     restart: on-failure
     ports:
-      - '8181:8181'
+      - '8000:8000'
     volumes:
       - '../app:/var/www/html'
+      # - './freelance_exchange:/app'
     links:
       - 'db'
+
+  nginx:
+    container_name: nginx
+    # image: nginx:1.24
+    build: 
+      context: .
+      dockerfile: config/nginx/Dockerfile
+    restart: on-failure
+    ports:
+      - '8080:80'
+    volumes:
+      - '../app:/var/www/html'
+      # - './logs/nginx:/var/log/nginx'
+      # - './config/nginx/nginx.conf:/etc/nginx/conf.d/default.conf'
+      # - './config/nginx/uwsgi_params:/etc/nginx/uwsgi_params'
+    links:
+      - 'django'
 
   db:
     container_name: db
@@ -22,11 +42,11 @@ services:
     volumes:
       - './db:/var/lib/postgresql'
 
-  adminer:
-    container_name: adminer
-    image: adminer:4.8.1-standalone
-    restart: on-failure
-    ports:
-      - '8080:8080'
-    links:
-      - 'db'
+  # adminer:
+  #   container_name: adminer
+  #   image: adminer:4.8.1-standalone
+  #   restart: on-failure
+  #   ports:
+  #     - '8080:8080'
+  #   links:
+  #     - 'db'
