@@ -39,6 +39,9 @@ class StarsJson():
 
     @staticmethod
     def parse(src) -> list[dict]:
+        if (type(src) is dict):
+            return [src]
+
         if (type(src) is list):
             return src
 
