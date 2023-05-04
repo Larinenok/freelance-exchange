@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 # from django.contrib.auth.models import User
 from .serializers import RegisterSerializer, AdSerializer
 from rest_framework import generics
+import json
 
 from .models import *
 
@@ -23,13 +24,17 @@ def home_view(request):
     profiles = []
 
     for user in CustomUser.objects.all():
-        profiles.append({'user': user, 'token': Token.objects.get_or_create(user=user)[0]})
+        profiles.append({'user': user, 'token': Token.objects.get_or_create(user=user)[0], 'stars': StarsJson.parse(user.stars_freelancer)})
+        # user.stars_freelancer = json.dumps(StarsJson.add_star(user.stars_freelancer, username='lololowka', value=5))
+        # user.stars_freelancer = StarsJson.remove_star(user.stars_freelancer, username='lololowka')
+        # user.save()
 
     context = {
         'profiles': profiles,
     }
 
     return render(request, 'home.html', context)
+
 
 def all_ads(request):
     ads = []
@@ -41,6 +46,7 @@ def all_ads(request):
         'ads': ads,
     }
     return render(request, 'user_ads.html', context)
+
 
 def profile(request, slug_name):
     user = get_object_or_404(CustomUser, slug=slug_name)

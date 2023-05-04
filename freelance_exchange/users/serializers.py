@@ -55,6 +55,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+
 class AdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
