@@ -1,12 +1,12 @@
 from django.shortcuts import render, get_object_or_404
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
-from .serializers import MyTokenObtainPairSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
-# from django.contrib.auth.models import User
-from .serializers import RegisterSerializer, AdSerializer
-from rest_framework import generics
-import json
+from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, AdSerializer
 
 from .models import *
 
@@ -81,6 +81,27 @@ def post_view(request, slug_name):
     return render(request, 'meta.html', context)
 
 
+@api_view(['GET'])
+def get_all_users_stars(request):
+        users = CustomUser.objects.all()
+        stars = []
+
+        for user in users:
+            stars.append({
+                'username': user.username,
+                'stars': StarsJson.parse(user.stars_freelancer)
+            })
+
+        return Response(stars)
+
+
+@api_view(['GET'])
+def get_user_stars(request, username):
+    user = get_object_or_404(CustomUser, slug=username)
+
+    return Response(StarsJson.parse(user.stars_freelancer))
+
+
 class MyObtainTokenPairView(TokenObtainPairView):
     permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
@@ -90,6 +111,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
 
 class AdList(generics.ListCreateAPIView):
     queryset = Ad.objects.all()

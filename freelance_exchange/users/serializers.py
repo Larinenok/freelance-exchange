@@ -50,7 +50,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             slug=slugify(validated_data['username'])
         )
 
-        
         user.set_password(validated_data['password'])
         user.save()
 

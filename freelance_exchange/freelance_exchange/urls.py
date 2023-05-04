@@ -19,7 +19,8 @@ from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
 from freelance_exchange import settings
-from users.views import home_view, profile, all_ads
+from users.views import home_view, profile, all_ads, get_all_users_stars, get_user_stars
+# from users.urls import urlstars
 
 urlpatterns = [
     path('', home_view),
@@ -28,6 +29,8 @@ urlpatterns = [
     path('profile/<slug:slug_name>/', profile),
     path('auth/', include('users.urls')),
     path('ads/', all_ads),
+    path('stars/', get_all_users_stars),
+    path('stars/<slug:username>/', get_user_stars)
 ]
 
 if settings.DEBUG:
