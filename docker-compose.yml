@@ -7,40 +7,35 @@ services:
       context: .
       dockerfile: config/django/Dockerfile
     restart: on-failure
-    ports:
-      - '8000:8000'
+    expose:
+      - 8001
     volumes:
-      - '../app:/var/www/html'
-      # - './freelance_exchange:/app'
+      - ./freelance_exchange:/app/freelance_exchange:z
     links:
-      - 'db'
+      - db
 
   nginx:
     container_name: nginx
-    # image: nginx:1.24
     build: 
       context: .
       dockerfile: config/nginx/Dockerfile
     restart: on-failure
     ports:
-      - '8080:80'
+      - 8080:80
     volumes:
-      - '../app:/var/www/html'
-      # - './logs/nginx:/var/log/nginx'
-      # - './config/nginx/nginx.conf:/etc/nginx/conf.d/default.conf'
-      # - './config/nginx/uwsgi_params:/etc/nginx/uwsgi_params'
+      - ./freelance_exchange:/app/freelance_exchange:z
     links:
-      - 'django'
+      - django
 
   db:
     container_name: db
     image: postgres:15
     expose:
-      - '5432'
+      - 5432
     env_file:
-      - 'freelance_exchange/.env'
+      - freelance_exchange/.env
     volumes:
-      - './db:/var/lib/postgresql'
+      - ./db:/var/lib/postgresql:z
 
   # adminer:
   #   container_name: adminer
