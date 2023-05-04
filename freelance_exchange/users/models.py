@@ -1,3 +1,5 @@
+import os.path
+
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
@@ -46,12 +48,14 @@ class CustomUser(AbstractUser):
         ordering = ['username', 'password']
 class Ad(models.Model):
     author = models.ForeignKey(CustomUser, verbose_name='Автор поста', blank=True, null=True, on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    category = models.CharField(max_length=100)
-    budget = models.IntegerField()
-    pub_date = models.DateTimeField(auto_now_add=True)
-    contact_info = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    id = models.AutoField(primary_key=True)
+    slug = models.SlugField(max_length=210, unique=True, null=True)
+    description = models.TextField(max_length=1000, verbose_name='Описание')
+    category = models.CharField(max_length=100, verbose_name='Категория')
+    budget = models.IntegerField(verbose_name='Бюджет')
+    pub_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
+    contact_info = models.CharField(max_length=200, verbose_name='Контактная информация')
 
     class Meta:
         verbose_name = 'Объявление'
@@ -59,6 +63,17 @@ class Ad(models.Model):
 
     def __str__(self):
         return self.title
+
+class AdFile(models.Model):
+    ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')
+    file = models.FileField(upload_to='files', verbose_name='Файл')
+
+    class Meta:
+        verbose_name = 'Файлы из объявлений'
+        verbose_name_plural = 'Файлы из объявлений'
+
+    def __str__(self):
+        return os.path.basename(self.file.name)
 
 
 

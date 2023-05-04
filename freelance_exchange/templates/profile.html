@@ -17,18 +17,27 @@
     {% endif %}
 
     <div class="content">
-    {% for ad in ads %}
-        <div class="item">
-            <p>title - {{ad}}</p>
-            <p>category - {{ad.category}}</p>
-            <p>author - {{ad.author}}</p>
-            <p>date - {{ad.pub_date}}</p>
-            <p>description - {{ad.description}}</p>
-            <p>budget - {{ad.budget}}</p>
-            <p>contact - {{ad.contact_info}}</p>
-            <br>
-        </div>
-    {% endfor %}
+        {% if ads %}
+        <p>Ads of {{profile}}:</p>
+            {% for ad in ads %}
+                <div class="item">
+                    <p>title - {{ad}}</p>
+                    <p>category - {{ad.category}}</p>
+                    <p>slug - {{ad.title_slug}}</p>
+                    <p>date - {{ad.pub_date}}</p>
+                    <p>description - {{ad.description}}</p>
+                    <p>budget - {{ad.budget}}</p>
+                    <p>contact - {{ad.contact_info}}</p>
+                    {% for f in files %}
+                        {% if ad == f.ad %}
+                            <div class="item">
+                                <a href={{f.file.url}} download=>{{f}}</a>
+                                {% endif %}
+                                {% endfor %}
+                    <br>
+                </div>
+            {% endfor %}
+        {% endif %}
 </div>
 </div>
 

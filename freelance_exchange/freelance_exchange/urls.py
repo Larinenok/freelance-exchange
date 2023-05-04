@@ -14,12 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
 from freelance_exchange import settings
-from users.views import home_view, profile, all_ads
+from users.views import home_view, profile, all_ads, ad_view
 
 urlpatterns = [
     path('', home_view),
@@ -28,6 +28,8 @@ urlpatterns = [
     path('profile/<slug:slug_name>/', profile),
     path('auth/', include('users.urls')),
     path('ads/', all_ads),
+    path('ads/<int:id>/<slug:slug_name>', ad_view)
+
 ]
 
 if settings.DEBUG:
