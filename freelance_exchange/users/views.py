@@ -5,10 +5,11 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, AdSerializer
 from .serializers import RegisterSerializer, AdSerializer
-from rest_framework import generics
+from rest_framework import generics, status
 from django.views.generic.edit import FormView
 from .forms import AdForm, UserForm
 from .models import *
@@ -60,7 +61,7 @@ def profile(request, slug_name):
     return render(request, 'profile.html', context)
 
 def ad_view(request, id, slug_name):
-    ad = get_object_or_404(Ad, slug=slug_name)
+    ad = get_object_or_404(Ad, id=id)
     files = AdFile.objects.filter(ad=ad)
     context = {
         'ad': ad,
