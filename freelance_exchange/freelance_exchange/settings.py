@@ -40,8 +40,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
-    'users.apps.UsersConfig'
+    'users.apps.UsersConfig',
+    'drf_yasg',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'djoser'
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTIFICATION_CLASSES' : (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 MIDDLEWARE = [
     # 'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -72,6 +82,10 @@ TEMPLATES = [
         },
     },
 ]
+
+TEMPLATE_LOADERS = (
+'django.template.loaders.eggs.Loader',
+)
 
 WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
 
