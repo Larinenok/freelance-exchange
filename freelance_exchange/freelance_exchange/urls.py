@@ -20,7 +20,7 @@ from rest_framework.authtoken import views
 
 from freelance_exchange import settings
 from users.views import home_view, profile, all_ads, get_all_users_stars, get_user_stars
-# from users.urls import urlstars
+from users.views import home_view, profile, all_ads, ad_view
 
 urlpatterns = [
     path('', home_view),
@@ -30,7 +30,8 @@ urlpatterns = [
     path('auth/', include('users.urls')),
     path('ads/', all_ads),
     path('stars/', get_all_users_stars),
-    path('stars/<slug:username>/', get_user_stars)
+    path('stars/<slug:username>/', get_user_stars),
+    path('ads/<int:id>/<slug:slug_name>', ad_view)
 ]
 
 if settings.DEBUG:

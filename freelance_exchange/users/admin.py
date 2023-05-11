@@ -17,15 +17,25 @@ class CustomUserAdmin(admin.ModelAdmin):
                                     'description', 'language', 'views', 'stars_freelancer', 'stars_customer',)}),)
     prepopulated_fields = {'slug': ('username',)}
 
+class AdFileAdmin(admin.StackedInline):
+    model = AdFile
+
 class AdAdmin(admin.ModelAdmin):
+    model = Ad
     fieldsets = [
-        ("Title/category", {"fields": ["title", "category"]}),
+        ("Title/category", {"fields": ["title", "category", "slug"]}),
         ("Content", {"fields": ["description", "budget"]}),
         ("Author", {"fields": ["author", "contact_info"]})
     ]
+    inlines = [AdFileAdmin]
+    prepopulated_fields = {'slug': ('title',)}
+
+class AdFileAdmin(admin.ModelAdmin):
+    pass
 
 
 admin.site.register(Ip)
 admin.site.register(Star)
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Ad, AdAdmin)
+admin.site.register(AdFile, AdFileAdmin)

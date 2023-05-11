@@ -7,7 +7,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, AdSerializer
-
+from .serializers import RegisterSerializer, AdSerializer
+from rest_framework import generics
+from django.views.generic.edit import FormView
+from .forms import AdForm, UserForm
 from .models import *
 
 
@@ -38,7 +41,6 @@ def home_view(request):
 
 def all_ads(request):
     ads = []
-
     for ad in Ad.objects.all():
         ads.append({'ad': ad})
 
@@ -51,13 +53,23 @@ def all_ads(request):
 def profile(request, slug_name):
     user = get_object_or_404(CustomUser, slug=slug_name)
     ads = Ad.objects.filter(author__slug=slug_name)
+    files = AdFile.objects.filter(ad__in=ads)
     context = {
         'profile': user,
         'ads': ads,
+        'files': files,
         'token': Token.objects.get_or_create(user=user)[0],
     }
     return render(request, 'profile.html', context)
 
+def ad_view(request, id, slug_name):
+    ad = get_object_or_404(Ad, slug=slug_name)
+    files = AdFile.objects.filter(ad=ad)
+    context = {
+        'ad': ad,
+        'files': files,
+    }
+    return render(request, 'ad_view.html', context)
 
 def post_view(request, slug_name):
     user = get_object_or_404(CustomUser, slug=slug_name)

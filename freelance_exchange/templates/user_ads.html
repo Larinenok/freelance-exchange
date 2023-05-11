@@ -5,9 +5,12 @@
 <div class="content">
     {% for ad in ads %}
         <div class="item">
-            <p>title - {{ad.ad}}</p>
-            <p>category - {{ad.ad.category}}</p>
             <p>author - {{ad.ad.author}}</p>
+            <a href="/profile/{{ad.ad.author}}">Ссылка на заказчика</a>
+            <p>title - {{ad.ad}}</p>
+            <a href="/ads/{{ad.ad.id}}/{{ad.ad.slug}}">Ссылка на объявление</a>
+            <p>slug - {{ad.ad.slug}}</p>
+            <p>category - {{ad.ad.category}}</p>
             <p>date - {{ad.ad.pub_date}}</p>
             <p>description - {{ad.ad.description}}</p>
             <p>budget - {{ad.ad.budget}}</p>
