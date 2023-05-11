@@ -113,12 +113,16 @@ def get_user_stars(request, username):
 
 @api_view(['POST'])
 def set_user_stars(request, username):
-    print(request.read)
+    try:
+        whose = request.POST['whose']
+        value = request.POST['value']
+    except:
+        return Response('Require "whose" and "value" parameters', status='401')
 
-    # user = get_object_or_404(CustomUser, slug=username)
-    # _stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
-    # user.stars_freelancer = _stars
-    # user.save()
+    user = get_object_or_404(CustomUser, slug=username)
+    _stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
+    user.stars_freelancer = _stars
+    user.save()
 
     return Response({'result': '_stars'})
 
