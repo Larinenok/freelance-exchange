@@ -111,6 +111,7 @@ def get_user_stars(request, username):
 
     return Response(StarsJson.parse(user.stars_freelancer))
 
+
 @api_view(['POST'])
 def set_user_stars(request, username):
     try:
