@@ -2,17 +2,20 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, AdSerializer
-from .serializers import RegisterSerializer, AdSerializer
+from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, AdSerializer, AdFileSerializer
 from rest_framework import generics, status
 from django.views.generic.edit import FormView
 from .forms import AdForm, UserForm
 from .models import *
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from pytils.translit import slugify
 
 
 def get_client_ip(request):
@@ -45,7 +48,7 @@ def all_ads(request):
     context = {
         'ads': ads,
     }
-    return render(request, 'user_ads.html', context)
+    return render(request, 'all_ads.html', context)
 
 
 def profile(request, slug_name):
@@ -135,6 +138,97 @@ def delete_user_stars(request, who, whose):
     user.save()
 
     return Response({'result': _stars})
+@swagger_auto_schema(method='post', request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
+            'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
+            'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
+            'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
+            'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
+            'files': openapi.Schema(type=openapi.TYPE_FILE, description='Files of the Ad'),
+        }
+    ))
+@api_view(['POST'])
+def create_ad(request):
+    author = request.user
+    title = request.data.get('title')
+    description = request.data.get('description')
+    budget = request.data.get('budget')
+    category = request.data.get('category')
+    contact_info = request.data.get('contact_info')
+    ad = Ad.objects.create(
+        author=author,
+        title=title,
+        slug=slugify(title),
+        description=description,
+        category=category,
+        budget=budget,
+        contact_info=contact_info,
+    )
+    ad.save()
+    return Response({'message': 'Ad created successfully'})
+
+@swagger_auto_schema(method='delete', manual_parameters=[openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)])
+@api_view(['DELETE'])
+def delete_ad(request):
+    ad_id = request.query_params.get('id')
+    try:
+        ad = Ad.objects.get(id=ad_id)
+        ad.delete()
+        return Response({'message': 'Ad deleted successfully!'})
+    except Ad.DoesNotExist:
+        return Response({'error': 'Ad not found!'}, status=404)
+
+@swagger_auto_schema(method='put', manual_parameters=[openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
+            'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
+            'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
+            'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
+            'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
+        }
+    ))
+@api_view(['PUT'])
+def edit_ad(request):
+    ad_id = request.query_params.get('id')
+    try:
+        ad = Ad.objects.get(id=ad_id)
+        author = request.user
+        title = request.data.get('title', ad.title)
+        description = request.data.get('description', ad.description)
+        category = request.data.get('category', ad.category)
+        budget = request.data.get('budget', ad.budget)
+        contact_info = request.data.get('contact_info', ad.contact_info)
+
+        ad.author = author
+        ad.title = title
+        ad.slug = slugify(title)
+        ad.description = description
+        ad.category = category
+        ad.budget = budget
+        ad.contact_info = contact_info
+        ad.save()
+
+        return Response({'message': 'Ad updated successfully!'})
+    except Ad.DoesNotExist:
+        return Response({'error': 'Ad not found!'}, status=404)
+
+class AdFileUploadView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        serializer = AdFileSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        else:
+            return Response(serializer.errors, status=400)
+
+
 
 
 class MyObtainTokenPairView(TokenObtainPairView):

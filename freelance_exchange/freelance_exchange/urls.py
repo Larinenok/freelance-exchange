@@ -23,7 +23,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from freelance_exchange import settings
-from users.views import home_view, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars
+from users.views import home_view, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars, create_ad, delete_ad, edit_ad, AdFileUploadView
 
 
 schema_view = get_schema_view(
@@ -48,6 +48,10 @@ urlpatterns = [
     path('profile/<slug:slug_name>/', profile),
     path('auth/', include('users.urls')),
     path('ads/', all_ads),
+    path('ad/create/', create_ad),
+    path('ad/edit/', edit_ad),
+    path('ad/delete', delete_ad),
+    path('ad/upload/files', AdFileUploadView.as_view(), name='file_upload'),
     path('stars/', get_all_users_stars),
     path('stars/<slug:username>/', get_user_stars),
     path('stars/edit/<slug:username>/', set_user_stars),
