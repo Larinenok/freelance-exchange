@@ -17,12 +17,31 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf.urls.static import static
 from rest_framework.authtoken import views
+from rest_framework import permissions
+# from rest_framework_swagger.views import get_swagger_view
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 from freelance_exchange import settings
-from users.views import home_view, profile, all_ads, get_all_users_stars, get_user_stars
-from users.views import home_view, profile, all_ads, ad_view
+from users.views import home_view, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars
+
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="API",
+        default_version='v1',
+        description="asd",
+        terms_of_service="asd",
+        contact=openapi.Contact(email="asd@asd.com"),
+        license=openapi.License(name="Awesome IP"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    # path('docs/', schema_view),
     path('', home_view),
     # path('api-token-auth/', views.obtain_auth_token),
     path('admin/', admin.site.urls),
@@ -31,6 +50,8 @@ urlpatterns = [
     path('ads/', all_ads),
     path('stars/', get_all_users_stars),
     path('stars/<slug:username>/', get_user_stars),
+    path('stars/edit/<slug:username>/', set_user_stars),
+    path('stars/delete/<slug:username>/', delete_user_stars),
     path('ads/<int:id>/<slug:slug_name>', ad_view)
 ]
 

@@ -28,9 +28,6 @@ def home_view(request):
 
     for user in CustomUser.objects.all():
         profiles.append({'user': user, 'token': Token.objects.get_or_create(user=user)[0], 'stars': StarsJson.parse(user.stars_freelancer)})
-        # user.stars_freelancer = json.dumps(StarsJson.add_star(user.stars_freelancer, username='lololowka', value=5))
-        # user.stars_freelancer = StarsJson.remove_star(user.stars_freelancer, username='lololowka')
-        # user.save()
 
     context = {
         'profiles': profiles,
@@ -112,6 +109,26 @@ def get_user_stars(request, username):
     user = get_object_or_404(CustomUser, slug=username)
 
     return Response(StarsJson.parse(user.stars_freelancer))
+
+@api_view(['POST'])
+def set_user_stars(request, username):
+    print(request.read)
+
+    # user = get_object_or_404(CustomUser, slug=username)
+    # _stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
+    # user.stars_freelancer = _stars
+    # user.save()
+
+    return Response({'result': '_stars'})
+
+@api_view(['POST'])
+def delete_user_stars(request, who, whose):
+    user = get_object_or_404(CustomUser, slug=who)
+    _stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
+    user.stars_freelancer = _stars
+    user.save()
+
+    return Response({'result': _stars})
 
 
 class MyObtainTokenPairView(TokenObtainPairView):
