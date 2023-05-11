@@ -50,7 +50,7 @@ class Ad(models.Model):
     author = models.ForeignKey(CustomUser, verbose_name='Автор поста', blank=True, null=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     id = models.AutoField(primary_key=True)
-    slug = models.SlugField(max_length=210, unique=True, null=True)
+    slug = models.SlugField(max_length=210, unique=False, null=True)
     description = models.TextField(max_length=1000, verbose_name='Описание')
     category = models.CharField(max_length=100, verbose_name='Категория')
     budget = models.IntegerField(verbose_name='Бюджет')

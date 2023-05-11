@@ -2,10 +2,11 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework.authtoken.models import Token
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 # from django.contrib.auth.models import User
 from .serializers import RegisterSerializer, AdSerializer
-from rest_framework import generics
+from rest_framework import generics, status
 from django.views.generic.edit import FormView
 from .forms import AdForm, UserForm
 
@@ -56,7 +57,7 @@ def profile(request, slug_name):
     return render(request, 'profile.html', context)
 
 def ad_view(request, id, slug_name):
-    ad = get_object_or_404(Ad, slug=slug_name)
+    ad = get_object_or_404(Ad, id=id)
     files = AdFile.objects.filter(ad=ad)
     context = {
         'ad': ad,
@@ -95,6 +96,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
 
 class AdList(generics.ListCreateAPIView):
     queryset = Ad.objects.all()

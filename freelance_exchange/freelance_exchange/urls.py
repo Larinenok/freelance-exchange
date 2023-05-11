@@ -19,7 +19,7 @@ from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
 from freelance_exchange import settings
-from users.views import home_view, profile, all_ads, ad_view
+from users.views import home_view, profile, all_ads, ad_view, RegisterView
 
 urlpatterns = [
     path('', home_view),
@@ -28,8 +28,8 @@ urlpatterns = [
     path('profile/<slug:slug_name>/', profile),
     path('auth/', include('users.urls')),
     path('ads/', all_ads),
-    path('ads/<int:id>/<slug:slug_name>', ad_view)
-
+    path('ads/<int:id>/<slug:slug_name>', ad_view),
+    path('register/', RegisterView.as_view(), name='auth_register'),
 ]
 
 if settings.DEBUG:
