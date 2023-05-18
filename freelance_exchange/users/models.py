@@ -53,19 +53,22 @@ class StarsJson():
     def add_star(src, username: str, value: int) -> list[dict]:
         stars = StarsJson.parse(src)
 
-        if (not stars):
-            stars = []
-
         if (0 <= value and value <= 5):
-            for star in stars:
+            for (i, star) in enumerate(stars):
+                if (star == {}):
+                    stars.pop(i)
+                    continue
+
                 if (star['username'] == username):
                     star['star'] = value
-                    break
-            else:
-                stars.append({
-                    'username': username,
-                    'star': value
-                })
+                    return stars
+
+            stars.append({
+                'username': username,
+                'star': value
+            })
+        else:
+            raise Exception("Value must be 0 <= value <= 5")
 
         return stars
 
@@ -74,7 +77,7 @@ class StarsJson():
     def remove_star(src, username: str) -> list[dict]:
         stars = StarsJson.parse(src)
 
-        if (stars):
+        if (len(stars) > 0):
             index = 0
             indexes = []
 
@@ -86,6 +89,9 @@ class StarsJson():
 
             for index in reversed(indexes):
                 stars.pop(index)
+
+        if (len(stars) < 1):
+            stars.append({})
 
         return stars
 

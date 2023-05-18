@@ -101,7 +101,7 @@ def get_all_users_stars(request):
 
         for user in users:
             stars.append({
-                'username': user.username,
+                'username': user.slug,
                 'stars': StarsJson.parse(user.stars_freelancer)
             })
 
@@ -110,34 +110,56 @@ def get_all_users_stars(request):
 
 @api_view(['GET'])
 def get_user_stars(request, username):
-    user = get_object_or_404(CustomUser, slug=username)
+    try:
+        user = get_object_or_404(CustomUser, slug=username)
 
-    return Response(StarsJson.parse(user.stars_freelancer))
+        return Response(StarsJson.parse(user.stars_freelancer))
+    except:
+        return Response('''Username not found''', status='401')
 
 
-@api_view(['POST'])
+@swagger_auto_schema(method='put', manual_parameters=[
+    openapi.Parameter('whose', openapi.IN_QUERY, description='Whose review are we deleting', type=openapi.TYPE_STRING),
+    openapi.Parameter('value', openapi.IN_QUERY, description='Number of stars (from 0 to 5)', type=openapi.TYPE_INTEGER)
+])
+@api_view(['PUT'])
 def set_user_stars(request, username):
     try:
-        whose = request.POST['whose']
-        value = request.POST['value']
+        whose = str(request.query_params.get('whose'))
+        value = int(request.query_params.get('value'))
     except:
-        return Response('Require "whose" and "value" parameters', status='401')
+        return Response('''Require "whose" and "value" parameters''', status='401')
 
-    user = get_object_or_404(CustomUser, slug=username)
-    _stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
-    user.stars_freelancer = _stars
-    user.save()
+    try:
+        user = get_object_or_404(CustomUser, slug=str(username))
+        stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
+        user.stars_freelancer = stars
+        user.save()
 
-    return Response({'result': '_stars'})
+        return Response({'result': stars})
+    except:
+        return Response('''Username not found''', status='401')
 
-@api_view(['POST'])
-def delete_user_stars(request, who, whose):
-    user = get_object_or_404(CustomUser, slug=who)
-    _stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
-    user.stars_freelancer = _stars
-    user.save()
+@swagger_auto_schema(method='delete', manual_parameters=[
+    openapi.Parameter('whose', openapi.IN_QUERY, description='Whose review are we deleting', type=openapi.TYPE_STRING)
+])
+@api_view(['DELETE'])
+def delete_user_stars(request, username):
+    try:
+        whose = str(request.query_params.get('whose'))
+    except:
+        return Response('''Require "whose" parameter''', status='401')
 
-    return Response({'result': _stars})
+    try:
+        user = get_object_or_404(CustomUser, slug=username)
+        _stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
+        user.stars_freelancer = _stars
+        user.save()
+
+        return Response({'result': _stars})
+    except:
+        return Response('''Username not found''', status='401')
+
 @swagger_auto_schema(method='post', request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
