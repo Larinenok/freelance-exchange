@@ -1,12 +1,12 @@
-import os.path
-
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import AbstractUser
 from rest_framework.authtoken.models import Token
+
 import json
+import os.path
 
 
 class Ip(models.Model):
@@ -96,7 +96,6 @@ class StarsJson():
         return stars
 
 
-
 class CustomUser(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='Логин')
     slug = models.SlugField(max_length=15, unique=True, null=True, verbose_name='Slug')
@@ -113,7 +112,7 @@ class CustomUser(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['username', 'password']
+        ordering = ['username']
 
 
 class Ad(models.Model):

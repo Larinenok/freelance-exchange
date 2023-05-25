@@ -23,30 +23,33 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from freelance_exchange import settings
-from users.views import home_view, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars, create_ad, delete_ad, edit_ad, AdFileUploadView
+from users.views import home_view, terms_of_service, me, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars, create_ad, delete_ad, edit_ad, AdFileUploadView#, signup, signin
 
 
 schema_view = get_schema_view(
     openapi.Info(
         title="API",
         default_version='v1',
-        description="asd",
-        terms_of_service="asd",
+        description="API for freelance exchanges",
+        terms_of_service="terms_of_service/",
         contact=openapi.Contact(email="asd@asd.com"),
-        license=openapi.License(name="Awesome IP"),
+        license=openapi.License(name="Здесь может быть ваша реклама"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
+    # path('signup/', signup, name='signup'),
+    # path('login/', login, name='login'),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    # path('docs/', schema_view),
+    path('docs/terms_of_service/', terms_of_service),
     path('', home_view),
     # path('api-token-auth/', views.obtain_auth_token),
     path('admin/', admin.site.urls),
     path('profile/<slug:slug_name>/', profile),
     path('auth/', include('users.urls')),
+    path('me/', me),
     path('ads/', all_ads),
     path('ad/create/', create_ad),
     path('ad/edit/', edit_ad),

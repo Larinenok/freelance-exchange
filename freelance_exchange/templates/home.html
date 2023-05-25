@@ -3,6 +3,15 @@
 {% block content %}
 
 <div class="content">
+    {% if user.is_authenticated %}
+        {{ user.username }}
+    {% else %}
+        {{ user }}
+        Not logged in.
+    {% endif %}
+
+    <br>
+
     {% for profile in profiles %}
         <div class="item">
             <img src="media/{{profile.user.photo}}" width=100 height=100>

@@ -1,9 +1,9 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -16,6 +16,37 @@ from .models import *
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
+
+
+#################
+# @api_view(['POST'])
+# def signup(request):
+#     data = request.data
+#     serializer = RegisterSerializer(data=data)
+#     if serializer.is_valid():
+#         if not CustomUser.objects.filter(username=data['email']).exists():
+#             user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['email'], email=data['email'], password=data['password'])
+#             user.save()
+#             # student = Student.objects.create(auth=user, name=data['first_name'], email=data['email'])
+#             return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
+#         else:
+#             return Response({'message':'User Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
+#     else:
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+# @api_view(['GET'])
+# def signin(request):
+#     data = request.data
+#
+#     if CustomUser.objects.filter(username=data['username']).exists():
+#         user = CustomUser.objects.get(username=data['username'])
+#         if user.check_password(data['password']):
+#             return Response(RegisterSerializer(instance=user).data, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'message':'Invalid Password'}, status=status.HTTP_400_BAD_REQUEST)
+#     else:
+#         return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
+#################
 
 
 def get_client_ip(request):
@@ -34,10 +65,22 @@ def home_view(request):
         profiles.append({'user': user, 'token': Token.objects.get_or_create(user=user)[0], 'stars': StarsJson.parse(user.stars_freelancer)})
 
     context = {
+        'user': request.user,
         'profiles': profiles,
     }
 
     return render(request, 'home.html', context)
+
+def terms_of_service(request):
+    return render(request, 'terms_of_service.html')
+
+def me(request):
+    token = request.headers['Authorization']
+
+    if (request.user.isauthenticated()):
+        return profile(request, request.user.slug)
+    
+    return Response('Not logged in.')
 
 
 def all_ads(request):
@@ -123,6 +166,7 @@ def get_user_stars(request, username):
     openapi.Parameter('value', openapi.IN_QUERY, description='Number of stars (from 0 to 5)', type=openapi.TYPE_INTEGER)
 ])
 @api_view(['PUT'])
+@permission_classes([permissions.IsAdminUser])
 def set_user_stars(request, username):
     try:
         whose = str(request.query_params.get('whose'))
@@ -140,10 +184,12 @@ def set_user_stars(request, username):
     except:
         return Response('''Username not found''', status='401')
 
+
 @swagger_auto_schema(method='delete', manual_parameters=[
     openapi.Parameter('whose', openapi.IN_QUERY, description='Whose review are we deleting', type=openapi.TYPE_STRING)
 ])
 @api_view(['DELETE'])
+@permission_classes([permissions.IsAdminUser])
 def delete_user_stars(request, username):
     try:
         whose = str(request.query_params.get('whose'))
@@ -160,18 +206,19 @@ def delete_user_stars(request, username):
     except:
         return Response('''Username not found''', status='401')
 
+
 @swagger_auto_schema(method='post', request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
-            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
-            'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
-            'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
-            'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
-            'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
-            'files': openapi.Schema(type=openapi.TYPE_FILE, description='Files of the Ad'),
-        }
-    ))
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
+        'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
+        'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
+        'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
+        'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
+        'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
+        'files': openapi.Schema(type=openapi.TYPE_FILE, description='Files of the Ad'),
+    }
+))
 @api_view(['POST'])
 def create_ad(request):
     author = request.user
@@ -192,8 +239,10 @@ def create_ad(request):
     ad.save()
     return Response({'message': 'Ad created successfully'})
 
+
 @swagger_auto_schema(method='delete', manual_parameters=[openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)])
 @api_view(['DELETE'])
+@permission_classes([permissions.IsAdminUser])
 def delete_ad(request):
     ad_id = request.query_params.get('id')
     try:
@@ -203,18 +252,20 @@ def delete_ad(request):
     except Ad.DoesNotExist:
         return Response({'error': 'Ad not found!'}, status=404)
 
+
 @swagger_auto_schema(method='put', manual_parameters=[openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)], request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
-            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
-            'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
-            'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
-            'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
-            'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
-        }
-    ))
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
+        'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
+        'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
+        'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
+        'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
+        'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
+    }
+))
 @api_view(['PUT'])
+@permission_classes([permissions.IsAdminUser])
 def edit_ad(request):
     ad_id = request.query_params.get('id')
     try:
@@ -239,6 +290,7 @@ def edit_ad(request):
     except Ad.DoesNotExist:
         return Response({'error': 'Ad not found!'}, status=404)
 
+
 class AdFileUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
@@ -249,8 +301,6 @@ class AdFileUploadView(APIView):
             return Response(serializer.data, status=201)
         else:
             return Response(serializer.errors, status=400)
-
-
 
 
 class MyObtainTokenPairView(TokenObtainPairView):
