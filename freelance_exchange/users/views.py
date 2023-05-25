@@ -18,35 +18,65 @@ from drf_yasg import openapi
 from pytils.translit import slugify
 
 
-#################
-# @api_view(['POST'])
-# def signup(request):
-#     data = request.data
-#     serializer = RegisterSerializer(data=data)
-#     if serializer.is_valid():
-#         if not CustomUser.objects.filter(username=data['email']).exists():
-#             user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['email'], email=data['email'], password=data['password'])
-#             user.save()
-#             # student = Student.objects.create(auth=user, name=data['first_name'], email=data['email'])
-#             return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response({'message':'User Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
-#     else:
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#
-# @api_view(['GET'])
-# def signin(request):
-#     data = request.data
-#
-#     if CustomUser.objects.filter(username=data['username']).exists():
-#         user = CustomUser.objects.get(username=data['username'])
-#         if user.check_password(data['password']):
-#             return Response(RegisterSerializer(instance=user).data, status=status.HTTP_200_OK)
-#         else:
-#             return Response({'message':'Invalid Password'}, status=status.HTTP_400_BAD_REQUEST)
-#     else:
-#         return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
-#################
+@swagger_auto_schema(method='post', manual_parameters=[
+    openapi.Parameter('first_name', openapi.IN_QUERY, description='first_name', type=openapi.TYPE_STRING),
+    openapi.Parameter('last_name', openapi.IN_QUERY, description='last_name', type=openapi.TYPE_STRING),
+    openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING),
+    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING),
+    openapi.Parameter('password2', openapi.IN_QUERY, description='password verification', type=openapi.TYPE_STRING),
+    openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING),
+    openapi.Parameter('photo', openapi.IN_QUERY, description='profile picture', type=openapi.TYPE_FILE, required=False),
+    openapi.Parameter('description', openapi.IN_QUERY, description='description', type=openapi.TYPE_STRING, required=False),
+    openapi.Parameter('language', openapi.IN_QUERY, description='language', type=openapi.TYPE_STRING, required=False),
+])
+@api_view(['POST'])
+def signup(request):
+    if request.data.get('password') is not None:
+        data = request.data
+    else:
+        data = request.query_params
+
+    serializer = RegisterSerializer(data=data)
+    if serializer.is_valid():
+        if not CustomUser.objects.filter(username=data['email']).exists():
+            user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['email'], email=data['email'], password=data['password'])
+            user.save()
+            return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'message':'User Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@swagger_auto_schema(method='get', manual_parameters=[
+    openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING, required=False),
+    openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING, required=False),
+    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING),
+])
+@api_view(['GET'])
+def signin(request):
+    if request.data.get('password') is not None:
+        data = request.data
+    else:
+        data = request.query_params
+
+    if data.get('username') is None and data.get('email') is None:
+        return Response({'message':'Require username or email'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if data.get('username') is not None:
+        if CustomUser.objects.filter(username=data.get('username')).exists():
+            user = CustomUser.objects.get(username=data.get('username'))
+        else:
+            return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        if CustomUser.objects.filter(email=data.get('email')).exists():
+            user = CustomUser.objects.get(email=data.get('email'))
+        else:
+            return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if user.check_password(data['password']):
+        return Response(RegisterSerializer(instance=user).data, status=status.HTTP_200_OK)
+    else:
+        return Response({'message':'Invalid Password'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_client_ip(request):
@@ -166,13 +196,16 @@ def get_user_stars(request, username):
     openapi.Parameter('value', openapi.IN_QUERY, description='Number of stars (from 0 to 5)', type=openapi.TYPE_INTEGER)
 ])
 @api_view(['PUT'])
-@permission_classes([permissions.IsAdminUser])
 def set_user_stars(request, username):
     try:
-        whose = str(request.query_params.get('whose'))
-        value = int(request.query_params.get('value'))
+        whose = str(request.data.get('whose'))
+        value = int(request.data.get('value'))
     except:
-        return Response('''Require "whose" and "value" parameters''', status='401')
+        try:
+            whose = str(request.query_params.get('whose'))
+            value = int(request.query_params.get('value'))
+        except:
+            return Response('''Require "whose" and "value" parameters''', status='401')
 
     try:
         user = get_object_or_404(CustomUser, slug=str(username))
@@ -192,9 +225,12 @@ def set_user_stars(request, username):
 @permission_classes([permissions.IsAdminUser])
 def delete_user_stars(request, username):
     try:
-        whose = str(request.query_params.get('whose'))
+            whose = str(request.data.get('whose'))
     except:
-        return Response('''Require "whose" parameter''', status='401')
+        try:
+            whose = str(request.query_params.get('whose'))
+        except:
+            return Response('''Require "whose" parameter''', status='401')
 
     try:
         user = get_object_or_404(CustomUser, slug=username)

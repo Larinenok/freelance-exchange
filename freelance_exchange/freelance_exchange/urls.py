@@ -23,7 +23,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from freelance_exchange import settings
-from users.views import home_view, terms_of_service, me, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars, create_ad, delete_ad, edit_ad, AdFileUploadView#, signup, signin
+from users.views import home_view, terms_of_service, me, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars, create_ad, delete_ad, edit_ad, AdFileUploadView, signup, signin
 
 
 schema_view = get_schema_view(
@@ -40,8 +40,9 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    # path('signup/', signup, name='signup'),
-    # path('login/', login, name='login'),
+    path('signup/', signup, name='signup'),
+    path('signin/', signin, name='signin'),
+
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('docs/terms_of_service/', terms_of_service),
     path('', home_view),
