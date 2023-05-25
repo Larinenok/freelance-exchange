@@ -3,3 +3,4 @@ venv
 **/__pycache__/
 freelance_exchange/media
 freelance_exchange/db
+.idea
