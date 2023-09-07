@@ -18,6 +18,9 @@ from drf_yasg import openapi
 from pytils.translit import slugify
 
 
+#                             #
+# -------- register --------- #
+#                             #
 @swagger_auto_schema(method='post', manual_parameters=[
     openapi.Parameter('first_name', openapi.IN_QUERY, description='first_name', type=openapi.TYPE_STRING),
     openapi.Parameter('last_name', openapi.IN_QUERY, description='last_name', type=openapi.TYPE_STRING),
@@ -47,6 +50,9 @@ def signup(request):
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+#                             #
+# ---------- login ---------- #
+#                             #
 @swagger_auto_schema(method='get', manual_parameters=[
     openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING, required=False),
     openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING, required=False),
@@ -169,18 +175,21 @@ def post_view(request, slug_name):
 
 @api_view(['GET'])
 def get_all_users_stars(request):
-        users = CustomUser.objects.all()
-        stars = []
+    users = CustomUser.objects.all()
+    stars = []
 
-        for user in users:
-            stars.append({
-                'username': user.slug,
-                'stars': StarsJson.parse(user.stars_freelancer)
-            })
+    for user in users:
+        stars.append({
+            'username': user.slug,
+            'stars': StarsJson.parse(user.stars_freelancer)
+        })
 
-        return Response(stars)
+    return Response(stars)
 
 
+@swagger_auto_schema(method='get', manual_parameters=[
+    openapi.Parameter('username', openapi.IN_PATH, description='Whose review are we checking', type=openapi.TYPE_STRING, required=True)
+])
 @api_view(['GET'])
 def get_user_stars(request, username):
     try:
@@ -192,8 +201,8 @@ def get_user_stars(request, username):
 
 
 @swagger_auto_schema(method='put', manual_parameters=[
-    openapi.Parameter('whose', openapi.IN_QUERY, description='Whose review are we deleting', type=openapi.TYPE_STRING),
-    openapi.Parameter('value', openapi.IN_QUERY, description='Number of stars (from 0 to 5)', type=openapi.TYPE_INTEGER)
+    openapi.Parameter('whose', openapi.IN_QUERY, description='Whose review are we deleting', type=openapi.TYPE_STRING, required=True),
+    openapi.Parameter('value', openapi.IN_QUERY, description='Number of stars (from 0 to 5)', type=openapi.TYPE_INTEGER, required=True)
 ])
 @api_view(['PUT'])
 def set_user_stars(request, username):
@@ -242,7 +251,9 @@ def delete_user_stars(request, username):
     except:
         return Response('''Username not found''', status='401')
 
-
+#                             #
+# ----------- ads ----------- #
+#                             #
 @swagger_auto_schema(method='post', request_body=openapi.Schema(
     type=openapi.TYPE_OBJECT,
     properties={
