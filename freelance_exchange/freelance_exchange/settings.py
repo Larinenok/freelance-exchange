@@ -15,6 +15,8 @@ import os
 from decouple import config
 from pathlib import Path
 
+from django.conf.global_settings import DATE_FORMAT
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -52,10 +54,13 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTIFICATION_CLASSES' : (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    "DATE_INPUT_FORMATS" : ["%d.%m.%Y"],
     # 'DEFAULT_PERMISSION_CLASSES': (
     #     'rest_framework.permissions.IsAdminUser',
     # ),
 }
+
+DATE_INPUT_FORMATS = ["%d.%m.%Y"]
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(weeks=4),

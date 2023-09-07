@@ -28,13 +28,14 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'username', 'password', 'password2', 'email', 'photo', 'description', 'language')
+        fields = ('first_name', 'last_name', 'username', 'password', 'password2', 'email', 'photo', 'description', 'language', 'birth_date')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True},
             'photo': {'required': False},
             'description': {'required': False},
             'language': {'required': False},
+            'birth_date': {'required': False},
         }
 
     def validate(self, attrs):

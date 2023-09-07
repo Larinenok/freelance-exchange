@@ -3,7 +3,7 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -17,22 +17,28 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
 
+from datetime import datetime
+
 
 #                             #
 # -------- register --------- #
 #                             #
-@swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('first_name', openapi.IN_QUERY, description='first_name', type=openapi.TYPE_STRING),
-    openapi.Parameter('last_name', openapi.IN_QUERY, description='last_name', type=openapi.TYPE_STRING),
-    openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING),
-    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING),
-    openapi.Parameter('password2', openapi.IN_QUERY, description='password verification', type=openapi.TYPE_STRING),
-    openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING),
-    openapi.Parameter('photo', openapi.IN_QUERY, description='profile picture', type=openapi.TYPE_FILE, required=False),
-    openapi.Parameter('description', openapi.IN_QUERY, description='description', type=openapi.TYPE_STRING, required=False),
-    openapi.Parameter('language', openapi.IN_QUERY, description='language', type=openapi.TYPE_STRING, required=False),
+@swagger_auto_schema(method='post',
+    operation_id="register",
+    manual_parameters=[
+        openapi.Parameter('first_name', openapi.IN_QUERY, description='first_name', type=openapi.TYPE_STRING, required=True),
+        openapi.Parameter('last_name', openapi.IN_QUERY, description='last_name', type=openapi.TYPE_STRING, required=True),
+        openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING, required=True),
+        openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING, required=True),
+        openapi.Parameter('password2', openapi.IN_QUERY, description='password verification', type=openapi.TYPE_STRING, required=True),
+        openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING, required=True),
+        openapi.Parameter('photo', openapi.IN_FORM, description='profile picture', type=openapi.TYPE_FILE, required=False),
+        openapi.Parameter('description', openapi.IN_QUERY, description='description', type=openapi.TYPE_STRING, required=False),
+        openapi.Parameter('language', openapi.IN_QUERY, description='language', type=openapi.TYPE_STRING, required=False),
+        openapi.Parameter('birth_date', openapi.IN_QUERY, description='birth date', type=openapi.FORMAT_DATE, required=False),
 ])
 @api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
 def signup(request):
     if request.data.get('password') is not None:
         data = request.data
@@ -42,7 +48,7 @@ def signup(request):
     serializer = RegisterSerializer(data=data)
     if serializer.is_valid():
         if not CustomUser.objects.filter(username=data['email']).exists():
-            user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['email'], email=data['email'], password=data['password'])
+            user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d'))
             user.save()
             return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
         else:

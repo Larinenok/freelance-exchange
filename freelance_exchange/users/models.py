@@ -99,6 +99,7 @@ class StarsJson():
 class CustomUser(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='Логин')
     slug = models.SlugField(max_length=15, unique=True, null=True, verbose_name='Slug')
+    birth_date = models.DateField(null=True, blank=True)
     photo = models.ImageField(upload_to="photos/%Y/%m/%d/", default='default/default.jpg', blank=True, verbose_name='Аватар')
     description = models.TextField(default='', blank=True, verbose_name='Описание')
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name='Язык')
