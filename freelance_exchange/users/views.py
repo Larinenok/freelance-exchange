@@ -49,8 +49,10 @@ def signup(request):
     serializer = RegisterSerializer(data=data)
     if serializer.is_valid():
         if not CustomUser.objects.filter(username=data['email']).exists():
-            print(data['birth_date'])
-            birth = datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d')
+            try:
+                birth = datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d')
+            except:
+                birth = None
             user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
             user.save()
             return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
