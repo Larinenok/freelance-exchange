@@ -53,10 +53,13 @@ def signup(request):
                 birth = datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d')
             except:
                 birth = None
-            user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
-            user.set_password(user.password)
-            user.save()
-            return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
+            try:
+                user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
+                user.set_password(user.password)
+                user.save()
+                return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
+            except:
+                return Response({'message':'Login Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'message':'User Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
     else:
