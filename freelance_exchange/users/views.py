@@ -45,10 +45,13 @@ def signup(request):
     else:
         data = request.query_params
 
+    # исправить поле др по умолчанию
     serializer = RegisterSerializer(data=data)
     if serializer.is_valid():
         if not CustomUser.objects.filter(username=data['email']).exists():
-            user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d'))
+            print(data['birth_date'])
+            birth = datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d')
+            user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
             user.save()
             return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
         else:
@@ -59,12 +62,12 @@ def signup(request):
 #                             #
 # ---------- login ---------- #
 #                             #
-@swagger_auto_schema(method='get', manual_parameters=[
+@swagger_auto_schema(method='post', manual_parameters=[
     openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING, required=False),
     openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING, required=False),
     openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING),
 ])
-@api_view(['GET'])
+@api_view(['POST'])
 def signin(request):
     if request.data.get('password') is not None:
         data = request.data
@@ -260,26 +263,32 @@ def delete_user_stars(request, username):
 #                             #
 # ----------- ads ----------- #
 #                             #
-@swagger_auto_schema(method='post', request_body=openapi.Schema(
-    type=openapi.TYPE_OBJECT,
-    properties={
-        'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
-        'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
-        'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
-        'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
-        'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
-        'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
-        'files': openapi.Schema(type=openapi.TYPE_FILE, description='Files of the Ad'),
-    }
-))
+@swagger_auto_schema(method='post', manual_parameters=[
+        openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad', required=True),
+        openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad', required=True),
+        openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad', required=True),
+        openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad', required=True),
+        openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad', required=True),
+        openapi.Parameter('slug', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Slug', required=True),
+        openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad', required=True),
+])
 @api_view(['POST'])
 def create_ad(request):
     author = request.user
-    title = request.data.get('title')
-    description = request.data.get('description')
-    budget = request.data.get('budget')
-    category = request.data.get('category')
-    contact_info = request.data.get('contact_info')
+
+    try:
+        title = request.query_params.get('title')
+        description = request.query_params.get('description')
+        budget = request.query_params.get('budget')
+        category = request.query_params.get('category')
+        contact_info = request.query_params.get('contact_info')
+    except:
+        title = request.data.get('title')
+        description = request.data.get('description')
+        budget = request.data.get('budget')
+        category = request.data.get('category')
+        contact_info = request.data.get('contact_info')
+
     ad = Ad.objects.create(
         author=author,
         title=title,
@@ -324,11 +333,19 @@ def edit_ad(request):
     try:
         ad = Ad.objects.get(id=ad_id)
         author = request.user
-        title = request.data.get('title', ad.title)
-        description = request.data.get('description', ad.description)
-        category = request.data.get('category', ad.category)
-        budget = request.data.get('budget', ad.budget)
-        contact_info = request.data.get('contact_info', ad.contact_info)
+
+        try:
+            title = request.query_params.get('title', ad.title)
+            description = request.query_params.get('description', ad.description)
+            category = request.query_params.get('category', ad.category)
+            budget = request.query_params.get('budget', ad.budget)
+            contact_info = request.query_params.get('contact_info', ad.contact_info)
+        except:
+            title = request.data.get('title', ad.title)
+            description = request.data.get('description', ad.description)
+            category = request.data.get('category', ad.category)
+            budget = request.data.get('budget', ad.budget)
+            contact_info = request.data.get('contact_info', ad.contact_info)
 
         ad.author = author
         ad.title = title
