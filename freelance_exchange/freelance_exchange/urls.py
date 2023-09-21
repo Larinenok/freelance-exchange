@@ -16,14 +16,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.conf.urls.static import static
-from rest_framework.authtoken import views
 from rest_framework import permissions
-# from rest_framework_swagger.views import get_swagger_view
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from freelance_exchange import settings
-from users.views import home_view, terms_of_service, me, profile, all_ads, ad_view, get_all_users_stars, get_user_stars, set_user_stars, delete_user_stars, create_ad, delete_ad, edit_ad, AdFileUploadView, signup, signin
+from users.views import *
 
 
 schema_view = get_schema_view(
@@ -40,8 +39,10 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('signup/', signup, name='signup'),
-    path('signin/', signin, name='signin'),
+    # path('signup/', signup, name='signup'),
+    # path('signin/', signin, name='signin'),
+    # path('refresh/', get_access_token, name='refresh'),
+    # path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # path('testlogin/', )
     path('accounts/', include('django.contrib.auth.urls')),
 
@@ -51,7 +52,7 @@ urlpatterns = [
     # path('api-token-auth/', views.obtain_auth_token),
     path('admin/', admin.site.urls),
     path('profile/<slug:slug_name>/', profile),
-    # path('auth/', include('users.urls')),
+    path('api/', include('users.urls')),
     path('me/', me),
     path('ads/', all_ads),
     path('ad/create/', create_ad),

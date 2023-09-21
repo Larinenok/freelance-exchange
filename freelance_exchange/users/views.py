@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes, permission_classes
-from rest_framework.authtoken.models import Token
+# from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, AdSerializer, AdFileSerializer
 from rest_framework import generics, status
 from django.views.generic.edit import FormView
@@ -16,6 +18,8 @@ from .models import *
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
+# from .settings import api_settings
+from rest_framework.settings import api_settings
 
 from datetime import datetime
 
@@ -57,7 +61,8 @@ def signup(request):
                 user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
                 user.set_password(user.password)
                 user.save()
-                return Response({'message':'User Created Successfully'}, status=status.HTTP_201_CREATED)
+                refresh = RefreshToken.for_user(user)
+                return Response({'refresh' : str(refresh), 'access': str(refresh.access_token)}, status=status.HTTP_201_CREATED)
             except:
                 return Response({'message':'Login Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -95,9 +100,26 @@ def signin(request):
             return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
 
     if user.check_password(data['password']):
-        return Response(RegisterSerializer(instance=user).data, status=status.HTTP_200_OK)
+        refresh = RefreshToken.for_user(user)
+        return Response({'refresh' : str(refresh), 'access': str(refresh.access_token)}, status=status.HTTP_200_OK)
     else:
         return Response({'message':'Invalid Password'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+#                             #
+# --------- refresh --------- #
+#                             #
+@swagger_auto_schema(method='post', manual_parameters=[
+    openapi.Parameter('refresh', openapi.IN_QUERY, description='refresh token', type=openapi.TYPE_STRING, required=True),
+])
+@api_view(['POST'])
+def get_access_token(request):
+    if request.data.get('password') is not None:
+        data = request.data
+    else:
+        data = request.query_params
+
+    return Response(str(RefreshToken(data.get('refresh'))))
 
 
 def get_client_ip(request):
@@ -113,7 +135,7 @@ def home_view(request):
     profiles = []
 
     for user in CustomUser.objects.all():
-        profiles.append({'user': user, 'token': Token.objects.get_or_create(user=user)[0], 'stars': StarsJson.parse(user.stars_freelancer)})
+        profiles.append({'user': user, 'token': str(RefreshToken.for_user(user)), 'stars': StarsJson.parse(user.stars_freelancer)})
 
     context = {
         'user': request.user,
