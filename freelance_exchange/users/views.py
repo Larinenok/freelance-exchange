@@ -214,6 +214,30 @@ def profile(request, slug_name):
     }
     return render(request, 'profile.html', context)
 
+
+# @swagger_auto_schema(method='get', manual_parameters=[
+#         openapi.Parameter('id', openapi.IN_QUERY, description='id', type=openapi.TYPE_INTEGER, required=True),
+# ])
+@api_view(['GET'])
+def api_ad_view(request, id):
+    ad = get_object_or_404(Ad, id=id)
+    files = AdFile.objects.filter(ad=ad)
+    context = {
+        'author': ad.author.first_name,
+        'title': ad.title,
+        'id': ad.id,
+        'slug': ad.slug,
+        'description': ad.description,
+        'category': ad.category,
+        'budget': ad.budget,
+        'pub_date': ad.pub_date,
+        'contact_info': ad.contact_info,
+        'files': files,
+    }
+
+    return Response(context, status=status.HTTP_200_OK)
+
+
 def ad_view(request, id):
     ad = get_object_or_404(Ad, id=id)
     files = AdFile.objects.filter(ad=ad)
