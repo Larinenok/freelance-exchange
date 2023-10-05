@@ -215,9 +215,6 @@ def profile(request, slug_name):
     return render(request, 'profile.html', context)
 
 def ad_view(request, id):
-    stop = id.find('-')
-    if stop != -1:
-        id = id[:stop]
     ad = get_object_or_404(Ad, id=id)
     files = AdFile.objects.filter(ad=ad)
     context = {
