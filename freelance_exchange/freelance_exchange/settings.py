@@ -60,6 +60,16 @@ REST_FRAMEWORK = {
     # ),
 }
 
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    }
+}
+
 DATE_INPUT_FORMATS = ["%d.%m.%Y"]
 
 SIMPLE_JWT = {

@@ -63,7 +63,7 @@ urlpatterns = [
     path('stars/<slug:username>/', get_user_stars),
     path('stars/edit/<slug:username>/', set_user_stars),
     path('stars/delete/<slug:username>/', delete_user_stars),
-    path('ads/<int:id>/<slug:slug_name>', ad_view)
+    path('ads/<int:id>-<slug:slug_name>', ad_view)
 ]
 
 if settings.DEBUG:

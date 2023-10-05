@@ -24,6 +24,17 @@ from rest_framework.settings import api_settings
 from datetime import datetime
 
 
+def check_token(request):
+    try:
+        token = request.headers['Authorization']
+        if 'Bearer' in token:
+            token = token[7:]
+        user_id = AccessToken(token)['user_id']
+        return CustomUser.objects.get(id=user_id)
+    except:
+        return None
+
+
 #                             #
 # -------- register --------- #
 #                             #
@@ -157,6 +168,7 @@ def get_users(request):
 
     return Response({'users': profiles}, status=status.HTTP_201_CREATED)
 
+
 def home_view(request):
     profiles = []
 
@@ -205,7 +217,7 @@ def profile(request, slug_name):
     return render(request, 'profile.html', context)
 
 def ad_view(request, id, slug_name):
-    ad = get_object_or_404(Ad, id=id)
+    ad = get_object_or_404(Ad, id=id, slug=slug_name)
     files = AdFile.objects.filter(ad=ad)
     context = {
         'ad': ad,
@@ -322,12 +334,13 @@ def delete_user_stars(request, username):
         openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad', required=True),
         openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad', required=True),
         openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad', required=True),
-        openapi.Parameter('slug', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Slug', required=True),
         openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad', required=True),
 ])
 @api_view(['POST'])
 def create_ad(request):
-    author = request.user
+    author = check_token(request)
+    if not author:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
     try:
         title = request.query_params.get('title')
@@ -357,11 +370,16 @@ def create_ad(request):
 
 @swagger_auto_schema(method='delete', manual_parameters=[openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)])
 @api_view(['DELETE'])
-@permission_classes([permissions.IsAdminUser])
 def delete_ad(request):
+    user = check_token(request)
+    if not user:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
     ad_id = request.query_params.get('id')
     try:
         ad = Ad.objects.get(id=ad_id)
+        if ad.author != user:
+            return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
         ad.delete()
         return Response({'message': 'Ad deleted successfully!'})
     except Ad.DoesNotExist:
@@ -380,12 +398,14 @@ def delete_ad(request):
     }
 ))
 @api_view(['PUT'])
-@permission_classes([permissions.IsAdminUser])
 def edit_ad(request):
+    author = check_token(request)
+    if not author:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
     ad_id = request.query_params.get('id')
     try:
         ad = Ad.objects.get(id=ad_id)
-        author = request.user
 
         try:
             title = request.query_params.get('title', ad.title)
