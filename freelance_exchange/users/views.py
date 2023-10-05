@@ -7,9 +7,9 @@ from rest_framework.decorators import api_view, parser_classes, permission_class
 # from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, AdSerializer, AdFileSerializer
 from rest_framework import generics, status
 from django.views.generic.edit import FormView
@@ -131,11 +131,37 @@ def get_client_ip(request):
     return ip
 
 
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def get_users(request):
+    profiles = []
+
+    for user in CustomUser.objects.all():
+        try:
+            birth = datetime.strptime(str(user.birth_date), '%Y-%m-%d').strftime('%d.%m.%Y')
+        except:
+            birth = None
+
+        profiles.append({
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'slug': user.slug,
+            'birth_date': birth,
+            'photo': user.photo.name,
+            'description': user.description,
+            'language': user.language,
+            # 'views': user.views,
+            'stars': StarsJson.parse(user.stars_freelancer)
+        })
+
+    return Response({'users': profiles}, status=status.HTTP_201_CREATED)
+
 def home_view(request):
     profiles = []
 
     for user in CustomUser.objects.all():
-        profiles.append({'user': user, 'token': str(RefreshToken.for_user(user)), 'stars': StarsJson.parse(user.stars_freelancer)})
+        profiles.append({'user': user, 'stars': StarsJson.parse(user.stars_freelancer)})
 
     context = {
         'user': request.user,
@@ -175,7 +201,6 @@ def profile(request, slug_name):
         'profile': user,
         'ads': ads,
         'files': files,
-        'token': Token.objects.get_or_create(user=user)[0],
     }
     return render(request, 'profile.html', context)
 
