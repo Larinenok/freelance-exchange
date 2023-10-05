@@ -186,8 +186,6 @@ def terms_of_service(request):
     return render(request, 'terms_of_service.html')
 
 def me(request):
-    token = request.headers['Authorization']
-
     if (request.user.isauthenticated()):
         return profile(request, request.user.slug)
     
@@ -216,8 +214,11 @@ def profile(request, slug_name):
     }
     return render(request, 'profile.html', context)
 
-def ad_view(request, id, slug_name):
-    ad = get_object_or_404(Ad, id=id, slug=slug_name)
+def ad_view(request, id):
+    stop = id.find('-')
+    if stop != -1:
+        id = id[:stop]
+    ad = get_object_or_404(Ad, id=id)
     files = AdFile.objects.filter(ad=ad)
     context = {
         'ad': ad,
