@@ -18,8 +18,6 @@ from .models import *
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
-# from .settings import api_settings
-from rest_framework.settings import api_settings
 
 from datetime import datetime
 
@@ -302,6 +300,10 @@ def get_user_stars(request, username):
 ])
 @api_view(['PUT'])
 def set_user_stars(request, username):
+    user_by_token = check_token(request)
+    if not user_by_token:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
     try:
         whose = str(request.data.get('whose'))
         value = int(request.data.get('value'))
@@ -314,6 +316,10 @@ def set_user_stars(request, username):
 
     try:
         user = get_object_or_404(CustomUser, slug=str(username))
+
+        if user != user_by_token:
+            return Response('''You can only change your reviews''', status=status.HTTP_401_UNAUTHORIZED)
+
         stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
         user.stars_freelancer = stars
         user.save()
@@ -327,10 +333,15 @@ def set_user_stars(request, username):
     openapi.Parameter('whose', openapi.IN_QUERY, description='Whose review are we deleting', type=openapi.TYPE_STRING)
 ])
 @api_view(['DELETE'])
-@permission_classes([permissions.IsAdminUser])
 def delete_user_stars(request, username):
+    user_by_token = check_token(request)
+    if not user_by_token:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
     try:
-            whose = str(request.data.get('whose'))
+        whose = str(request.data.get('whose'))
+        if whose == 'None':
+            raise Exception('')
     except:
         try:
             whose = str(request.query_params.get('whose'))
@@ -339,13 +350,17 @@ def delete_user_stars(request, username):
 
     try:
         user = get_object_or_404(CustomUser, slug=username)
-        _stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
-        user.stars_freelancer = _stars
+
+        if user != user_by_token:
+            return Response('''You can only change your reviews''', status=status.HTTP_401_UNAUTHORIZED)
+
+        stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
+        user.stars_freelancer = stars
         user.save()
 
-        return Response({'result': _stars})
+        return Response({'result': stars})
     except:
-        return Response('''Username not found''', status='401')
+        return Response('''Non-correct data''', status='401')
 
 #                             #
 # ----------- ads ----------- #
