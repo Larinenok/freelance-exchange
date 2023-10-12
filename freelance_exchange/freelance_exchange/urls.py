@@ -57,14 +57,14 @@ urlpatterns = [
     path('ads/', all_ads),
     path('ad/create/', create_ad),
     path('ad/edit/', edit_ad),
-    path('ad/delete', delete_ad),
-    path('ad/upload/files', AdFileUploadView.as_view(), name='file_upload'),
+    path('ad/delete/', delete_ad),
+    path('ad/upload/files/', AdFileUploadView.as_view(), name='file_upload'),
     path('stars/', get_all_users_stars),
     path('stars/<slug:username>/', get_user_stars),
     path('stars/edit/<slug:username>/', set_user_stars),
     path('stars/delete/<slug:username>/', delete_user_stars),
-    path('adsview/<int:id>', ad_view),
-    path('ads/<int:id>/', api_ad_view)
+    path('ads/<int:id>-<str:slug>/', ad_view),
+    path('apiads/<int:id>/', api_ad_view)
 ]
 
 if settings.DEBUG:

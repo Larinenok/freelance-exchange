@@ -238,8 +238,9 @@ def api_ad_view(request, id):
     return Response(context, status=status.HTTP_200_OK)
 
 
-def ad_view(request, id):
+def ad_view(request, id, slug):
     ad = get_object_or_404(Ad, id=id)
+    slug = ad.slug
     files = AdFile.objects.filter(ad=ad)
     context = {
         'ad': ad,
@@ -408,17 +409,15 @@ def delete_ad(request):
         return Response({'error': 'Ad not found!'}, status=404)
 
 
-@swagger_auto_schema(method='put', manual_parameters=[openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)], request_body=openapi.Schema(
-    type=openapi.TYPE_OBJECT,
-    properties={
-        'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the Ad'),
-        'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description of the Ad'),
-        'category': openapi.Schema(type=openapi.TYPE_STRING, description='Category of the Ad'),
-        'budget': openapi.Schema(type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
-        'contact_info': openapi.Schema(type=openapi.TYPE_STRING, description='Contact information for the Ad'),
-        'slug': openapi.Schema(type=openapi.TYPE_STRING, description='Slug'),
-    }
-))
+@swagger_auto_schema(method='put', manual_parameters=[
+        openapi.Parameter('id', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the AD', required=True),
+        openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad'),
+        openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad'),
+        openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad'),
+        openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
+        openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad'),
+        openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad'),
+])
 @api_view(['PUT'])
 def edit_ad(request):
     author = check_token(request)

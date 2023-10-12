@@ -13,8 +13,8 @@ class CustomUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'email')
     fieldsets = (('Main Fields',
                   {'fields': (
-                            'first_name', 'last_name', 'username', 'slug', 'email', 'photo',
-                            'description', 'language', 'views', 'stars_freelancer', 'stars_customer',)}),)
+                                    'first_name', 'last_name', 'username', 'slug', 'email', 'photo',
+                                    'description', 'language', 'views', 'stars_freelancer', 'stars_customer',)}),)
     prepopulated_fields = {'slug': ('username',)}
 
 class AdFileAdmin(admin.StackedInline):
