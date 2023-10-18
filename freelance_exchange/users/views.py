@@ -83,9 +83,8 @@ def signup(request):
 # ---------- login ---------- #
 #                             #
 @swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING, required=False),
-    openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING, required=False),
-    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING),
+    openapi.Parameter('login', openapi.IN_QUERY, description='login', type=openapi.TYPE_STRING, required=True),
+    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING, required=True),
 ])
 @api_view(['POST'])
 def signin(request):
@@ -94,17 +93,16 @@ def signin(request):
     else:
         data = request.query_params
 
-    if data.get('username') is None and data.get('email') is None:
-        return Response({'message':'Require username or email'}, status=status.HTTP_400_BAD_REQUEST)
+    login = data.get('login')
 
-    if data.get('username') is not None:
-        if CustomUser.objects.filter(username=data.get('username')).exists():
-            user = CustomUser.objects.get(username=data.get('username'))
+    if not '@' in login:
+        if CustomUser.objects.filter(username=login).exists():
+            user = CustomUser.objects.get(username=login)
         else:
             return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
     else:
-        if CustomUser.objects.filter(email=data.get('email')).exists():
-            user = CustomUser.objects.get(email=data.get('email'))
+        if CustomUser.objects.filter(email=login).exists():
+            user = CustomUser.objects.get(email=login)
         else:
             return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
 
