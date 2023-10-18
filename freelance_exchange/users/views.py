@@ -18,8 +18,6 @@ from .models import *
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
-# from .settings import api_settings
-from rest_framework.settings import api_settings
 
 from datetime import datetime
 
@@ -85,9 +83,8 @@ def signup(request):
 # ---------- login ---------- #
 #                             #
 @swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING, required=False),
-    openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING, required=False),
-    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING),
+    openapi.Parameter('login', openapi.IN_QUERY, description='login', type=openapi.TYPE_STRING, required=True),
+    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING, required=True),
 ])
 @api_view(['POST'])
 def signin(request):
@@ -96,17 +93,16 @@ def signin(request):
     else:
         data = request.query_params
 
-    if data.get('username') is None and data.get('email') is None:
-        return Response({'message':'Require username or email'}, status=status.HTTP_400_BAD_REQUEST)
+    login = data.get('login')
 
-    if data.get('username') is not None:
-        if CustomUser.objects.filter(username=data.get('username')).exists():
-            user = CustomUser.objects.get(username=data.get('username'))
+    if not '@' in login:
+        if CustomUser.objects.filter(username=login).exists():
+            user = CustomUser.objects.get(username=login)
         else:
             return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
     else:
-        if CustomUser.objects.filter(email=data.get('email')).exists():
-            user = CustomUser.objects.get(email=data.get('email'))
+        if CustomUser.objects.filter(email=login).exists():
+            user = CustomUser.objects.get(email=login)
         else:
             return Response({'message':'User Does Not Exist'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -303,6 +299,10 @@ def get_user_stars(request, username):
 ])
 @api_view(['PUT'])
 def set_user_stars(request, username):
+    user_by_token = check_token(request)
+    if not user_by_token:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
     try:
         whose = str(request.data.get('whose'))
         value = int(request.data.get('value'))
@@ -315,6 +315,10 @@ def set_user_stars(request, username):
 
     try:
         user = get_object_or_404(CustomUser, slug=str(username))
+
+        if user != user_by_token:
+            return Response('''You can only change your reviews''', status=status.HTTP_401_UNAUTHORIZED)
+
         stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
         user.stars_freelancer = stars
         user.save()
@@ -328,10 +332,15 @@ def set_user_stars(request, username):
     openapi.Parameter('whose', openapi.IN_QUERY, description='Whose review are we deleting', type=openapi.TYPE_STRING)
 ])
 @api_view(['DELETE'])
-@permission_classes([permissions.IsAdminUser])
 def delete_user_stars(request, username):
+    user_by_token = check_token(request)
+    if not user_by_token:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
     try:
-            whose = str(request.data.get('whose'))
+        whose = str(request.data.get('whose'))
+        if whose == 'None':
+            raise Exception('')
     except:
         try:
             whose = str(request.query_params.get('whose'))
@@ -340,13 +349,17 @@ def delete_user_stars(request, username):
 
     try:
         user = get_object_or_404(CustomUser, slug=username)
-        _stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
-        user.stars_freelancer = _stars
+
+        if user != user_by_token:
+            return Response('''You can only change your reviews''', status=status.HTTP_401_UNAUTHORIZED)
+
+        stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
+        user.stars_freelancer = stars
         user.save()
 
-        return Response({'result': _stars})
+        return Response({'result': stars})
     except:
-        return Response('''Username not found''', status='401')
+        return Response('''Non-correct data''', status='401')
 
 #                             #
 # ----------- ads ----------- #

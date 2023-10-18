@@ -76,19 +76,16 @@ class StarsJson():
     @staticmethod
     def remove_star(src, username: str) -> list[dict]:
         stars = StarsJson.parse(src)
+        r_stars = stars[::-1]
 
         if (len(stars) > 0):
-            index = 0
-            indexes = []
+            index = len(stars) - 1
 
-            for star in stars:
-                if (star['username'] == username):
-                    indexes.append(index)
+            for star in r_stars:
+                if star['username'] == username:
+                    stars.pop(index)
 
-                index += 1
-
-            for index in reversed(indexes):
-                stars.pop(index)
+                index -= 1
 
         if (len(stars) < 1):
             stars.append({})
