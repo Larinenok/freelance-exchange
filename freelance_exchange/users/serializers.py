@@ -15,7 +15,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Add custom claims
         token['username'] = user.username
-        print(token)
+
         return token
 
 
@@ -56,7 +56,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         if ('language' in validated_data.keys()):
             language=validated_data['language'],
 
-        if ('language' in validated_data.keys()):
+        if ('photo' in validated_data.keys()):
             photo=validated_data['photo'],
 
         user = CustomUser.objects.create(
