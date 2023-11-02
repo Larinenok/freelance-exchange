@@ -140,7 +140,7 @@ DATABASES = {
         'NAME': config('POSTGRES_DB'),
         'USER': config('POSTGRES_USER'),
         'PASSWORD': config('POSTGRES_PASSWORD'),
-        'HOST': 'db',
+        'HOST': 'db_freelance_exchange',
         'PORT': '5432',
     }
 }
