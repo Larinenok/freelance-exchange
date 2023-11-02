@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -33,25 +33,39 @@ def check_token(request):
         return None
 
 
+token_responses = {
+    status.HTTP_200_OK: openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'access': openapi.Schema(type=openapi.TYPE_STRING, title='access token'),
+            'refresh': openapi.Schema(type=openapi.TYPE_STRING, title='refresh token'),
+})}
+
+
 #                             #
 # -------- register --------- #
 #                             #
 @swagger_auto_schema(method='post',
     operation_id="register",
-    manual_parameters=[
-        openapi.Parameter('first_name', openapi.IN_QUERY, description='first_name', type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter('last_name', openapi.IN_QUERY, description='last_name', type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter('username', openapi.IN_QUERY, description='username', type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter('password2', openapi.IN_QUERY, description='password verification', type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter('email', openapi.IN_QUERY, description='email', type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter('photo', openapi.IN_FORM, description='profile picture', type=openapi.TYPE_FILE, required=False),
-        openapi.Parameter('description', openapi.IN_QUERY, description='description', type=openapi.TYPE_STRING, required=False),
-        openapi.Parameter('language', openapi.IN_QUERY, description='language', type=openapi.TYPE_STRING, required=False),
-        openapi.Parameter('birth_date', openapi.IN_QUERY, description='birth date', type=openapi.FORMAT_DATE, required=False),
-])
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'first_name': openapi.Schema(type=openapi.TYPE_STRING, title='first name'),
+            'last_name': openapi.Schema(type=openapi.TYPE_STRING, title='last name'),
+            'username': openapi.Schema(type=openapi.TYPE_STRING, title='username'),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, title='password'),
+            'password2': openapi.Schema(type=openapi.TYPE_STRING, title='password verification'),
+            'email': openapi.Schema(type=openapi.TYPE_STRING, title='email'),
+            'photo': openapi.Schema(type=openapi.TYPE_FILE, title='profile picture'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, title='description'),
+            'language': openapi.Schema(type=openapi.TYPE_STRING, title='language', enum=settings.LANGUAGES),
+            'birth_date': openapi.Schema(type=openapi.TYPE_STRING, title='birth date', format='DD.MM.YYYY'),
+        },
+        required=['first_name', 'last_name', 'username', 'password', 'password2', 'email']
+    ),
+    responses=token_responses
+)
 @api_view(['POST'])
-@parser_classes([MultiPartParser, FormParser])
 def signup(request):
     if request.data.get('password') is not None:
         data = request.data
@@ -82,10 +96,17 @@ def signup(request):
 #                             #
 # ---------- login ---------- #
 #                             #
-@swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('login', openapi.IN_QUERY, description='login', type=openapi.TYPE_STRING, required=True),
-    openapi.Parameter('password', openapi.IN_QUERY, description='password', type=openapi.TYPE_STRING, required=True),
-])
+@swagger_auto_schema(method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'login': openapi.Schema(type=openapi.TYPE_STRING, title='email or username'),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, title='password'),
+        },
+        required=['login', 'password']
+    ),
+    responses=token_responses
+)
 @api_view(['POST'])
 def signin(request):
     if request.data.get('password') is not None:
@@ -116,17 +137,32 @@ def signin(request):
 #                             #
 # --------- refresh --------- #
 #                             #
-@swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('refresh', openapi.IN_QUERY, description='refresh token', type=openapi.TYPE_STRING, required=True),
-])
+@swagger_auto_schema(method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'refresh': openapi.Schema(type=openapi.TYPE_STRING, title='refresh token'),
+        }
+    ),
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'access': openapi.Schema(type=openapi.TYPE_STRING, title='access token'),
+})})
 @api_view(['POST'])
 def get_access_token(request):
-    if request.data.get('password') is not None:
+    try:
         data = request.data
-    else:
+    except:
         data = request.query_params
 
-    return Response(str(RefreshToken(data.get('refresh'))))
+    try:
+        access = RefreshToken(data.get('refresh'))
+    except:
+        return Response({'message':'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({'access': str(access)}, status=status.HTTP_200_OK)
 
 
 def get_client_ip(request):
