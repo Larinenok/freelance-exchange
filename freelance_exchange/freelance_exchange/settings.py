@@ -55,7 +55,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTIFICATION_CLASSES' : (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    "DATE_INPUT_FORMATS" : ["%d.%m.%Y"],
+    "DATETIME_INPUT_FORMATS" : ["%d.%m.%Y"],
     # 'DEFAULT_PERMISSION_CLASSES': (
     #     'rest_framework.permissions.IsAdminUser',
     # ),
