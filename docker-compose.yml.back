@@ -1,41 +1,35 @@
 version: '3.8'
 
 services:
-  django_freelance_exchange:
-    container_name: django_freelance_exchange
+  django:
+    container_name: django
     build:
       context: .
       dockerfile: config/django/Dockerfile
     restart: on-failure
-    networks:
-      - demo
     expose:
       - 8001
     volumes:
       - ./freelance_exchange:/app/freelance_exchange:z
     links:
-      - db_freelance_exchange
+      - db
 
-  nginx_freelance_exchange:
-    container_name: nginx_freelance_exchange
+  nginx:
+    container_name: nginx
     build: 
       context: .
       dockerfile: config/nginx/Dockerfile
     restart: on-failure
-    networks:
-      - demo
-    expose:
-      - 80
+    ports:
+      - 8080:80
     volumes:
       - ./freelance_exchange:/app/freelance_exchange:z
     links:
-      - django_freelance_exchange
+      - django
 
-  db_freelance_exchange:
-    container_name: db_freelance_exchange
+  db:
+    container_name: db
     image: postgres:15
-    networks:
-      - demo
     expose:
       - 5432
     env_file:
@@ -43,6 +37,11 @@ services:
     volumes:
       - ./db:/var/lib/postgresql:z
 
-networks:
-  demo:
-    external: true
+  # adminer:
+  #   container_name: adminer
+  #   image: adminer:4.8.1-standalone
+  #   restart: on-failure
+  #   ports:
+  #     - '8080:8080'
+  #   links:
+  #     - 'db'
