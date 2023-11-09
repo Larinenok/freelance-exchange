@@ -13,6 +13,8 @@ services:
       - 8001
     volumes:
       - ./freelance_exchange:/app/freelance_exchange:z
+    depends_on:
+      - db_freelance_exchange
     links:
       - db_freelance_exchange
 
@@ -45,4 +47,5 @@ services:
 
 networks:
   demo:
+    # driver: bridge
     external: true
