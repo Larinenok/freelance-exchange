@@ -110,7 +110,7 @@ TEMPLATES = [
 ]
 
 TEMPLATE_LOADERS = (
-'django.template.loaders.eggs.Loader',
+    'django.template.loaders.eggs.Loader',
 )
 
 WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
