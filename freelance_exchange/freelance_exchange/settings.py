@@ -157,7 +157,7 @@ CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
     'authorization',
-    'content_type',
+    'content-type',
     'dnt',
     'origin',
     'user_agent',
@@ -167,9 +167,6 @@ CORS_ALLOW_HEADERS = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = (
-  'http://localhost:3000',
-)
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
