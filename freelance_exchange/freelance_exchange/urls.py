@@ -52,7 +52,7 @@ urlpatterns = [
     # path('api-token-auth/', views.obtain_auth_token),
     path('admin/', admin.site.urls),
     path('profile/<slug:slug_name>/', profile),
-    path('api/', include('users.urls')),
+    path('api/users/', include('users.urls')),
     path('me/', me),
     path('ads/', all_ads),
     path('ad/create/', create_ad),

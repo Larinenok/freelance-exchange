@@ -66,6 +66,7 @@ token_responses = {
     responses=token_responses
 )
 @api_view(['POST'])
+@permission_classes([AllowAny,])
 def signup(request):
     if request.data.get('password') is not None:
         data = request.data
