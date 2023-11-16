@@ -19,7 +19,7 @@ services:
       - db_freelance_exchange
 
   nginxfreelanceexchange:
-    container_name: nginx_freelance_exchange
+    container_name: nginxfreelanceexchange
     build: 
       context: .
       dockerfile: config/nginx/Dockerfile
