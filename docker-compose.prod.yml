@@ -18,7 +18,7 @@ services:
     links:
       - db_freelance_exchange
 
-  nginx_freelance_exchange:
+  nginxfreelanceexchange:
     container_name: nginx_freelance_exchange
     build: 
       context: .
