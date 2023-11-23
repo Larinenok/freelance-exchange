@@ -44,7 +44,7 @@ urlpatterns = [
     # path('refresh/', get_access_token, name='refresh'),
     # path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # path('testlogin/', )
-    path('accounts/', include('django.contrib.auth.urls')),
+    # path('api/accounts/', include('django.contrib.auth.urls')),
 
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('docs/terms_of_service/', terms_of_service),
@@ -54,17 +54,17 @@ urlpatterns = [
     path('profile/<slug:slug_name>/', profile),
     path('api/users/', include('users.urls')),
     path('me/', me),
-    path('ads/', all_ads),
-    path('ad/create/', create_ad),
-    path('ad/edit/', edit_ad),
-    path('ad/delete', delete_ad),
-    path('ad/upload/files', AdFileUploadView.as_view(), name='file_upload'),
-    path('stars/', get_all_users_stars),
-    path('stars/<slug:username>/', get_user_stars),
-    path('stars/edit/<slug:username>/', set_user_stars),
-    path('stars/delete/<slug:username>/', delete_user_stars),
+    path('api/ads/', all_ads),
+    path('api/ad/create/', create_ad),
+    path('api/ad/edit/', edit_ad),
+    path('api/ad/delete', delete_ad),
+    path('api/ad/upload/files', AdFileUploadView.as_view(), name='file_upload'),
+    path('api/stars/', get_all_users_stars),
+    path('api/stars/<slug:username>/', get_user_stars),
+    path('api/stars/edit/<slug:username>/', set_user_stars),
+    path('api/stars/delete/<slug:username>/', delete_user_stars),
     path('adsview/<int:id>', ad_view),
-    path('ads/<int:id>/', api_ad_view)
+    path('api/ads/<int:id>/', api_ad_view)
 ]
 
 if settings.DEBUG:
