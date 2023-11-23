@@ -95,8 +95,6 @@ def signup(request):
             except:
                 birth = None
 
-            print(birth)
-
             try:
                 user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
                 user.set_password(user.password)
