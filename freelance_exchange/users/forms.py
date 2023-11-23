@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import CustomUser, Ad
-from django.views.generic.edit import FormView
+from .models import CustomUser
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -20,14 +19,3 @@ class UserForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ('first_name', 'last_name', 'email')
-
-
-class AdForm(forms.ModelForm):
-    files = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
-    class Meta:
-        model = Ad
-        fields = ('title', 'author','id')
-
-
-class FileFieldForm(forms.Form):
-    file_field = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))

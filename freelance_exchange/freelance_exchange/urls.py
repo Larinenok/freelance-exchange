@@ -23,6 +23,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from freelance_exchange import settings
 from users.views import *
+from ads.views import *
+from stars.views import *
 
 
 schema_view = get_schema_view(
@@ -64,7 +66,11 @@ urlpatterns = [
     path('stars/edit/<slug:username>/', set_user_stars),
     path('stars/delete/<slug:username>/', delete_user_stars),
     path('ads/<int:id>-<str:slug>/', ad_view),
-    path('apiads/<int:id>/', api_ad_view)
+    path('api/ads/', api_ad_view),
+    path('ad/response/', response_ad),
+    # path('api/ad_responders/', get_responders),
+    path('api/ad_responses/', get_responses),
+    path('ad/set_executor/', set_executor),
 ]
 
 if settings.DEBUG:

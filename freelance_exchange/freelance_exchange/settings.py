@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'ads.apps.AdsConfig',
+    'stars.apps.StarsConfig'
     # 'djoser'
 ]
 
