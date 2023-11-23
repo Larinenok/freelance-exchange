@@ -83,7 +83,7 @@ SIMPLE_JWT = {
 
 MIDDLEWARE = [
     # 'whitenoise.middleware.WhiteNoiseMiddleware',
-
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -91,7 +91,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'freelance_exchange.urls'
@@ -113,7 +112,7 @@ TEMPLATES = [
 ]
 
 TEMPLATE_LOADERS = (
-'django.template.loaders.eggs.Loader',
+    'django.template.loaders.eggs.Loader',
 )
 
 WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
@@ -121,13 +120,6 @@ WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': 'mydatabase',
-#     }
-# }
 
 DATABASES = {
     'default': {
@@ -142,7 +134,7 @@ DATABASES = {
 #         'NAME': config('POSTGRES_DB'),
 #         'USER': config('POSTGRES_USER'),
 #         'PASSWORD': config('POSTGRES_PASSWORD'),
-#         'HOST': 'db',
+#         'HOST': 'db_freelance_exchange',
 #         'PORT': '5432',
 #     }
 # }
@@ -160,7 +152,7 @@ CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
     'authorization',
-    'content_type',
+    'content-type',
     'dnt',
     'origin',
     'user_agent',
@@ -170,9 +162,7 @@ CORS_ALLOW_HEADERS = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = (
-  'http://localhost:8000',
-)
+CORS_URLS_REGEX = r'^/api/.*$'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

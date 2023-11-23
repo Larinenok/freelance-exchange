@@ -36,6 +36,26 @@ token_responses = {
 })}
 
 
+def user_data(user) -> dict:
+    try:
+        birth = datetime.strptime(str(user.birth_date), '%Y-%m-%d').strftime('%d.%m.%Y')
+    except:
+        birth = None
+
+    return {
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'slug': user.slug,
+        'birth_date': birth,
+        'photo': user.photo.name,
+        'description': user.description,
+        'language': user.language,
+        # 'views': user.views,
+        'stars': StarsJson.parse(user.stars_freelancer)
+    }
+
+
 #                             #
 # -------- register --------- #
 #                             #
@@ -60,13 +80,13 @@ token_responses = {
     responses=token_responses
 )
 @api_view(['POST'])
+@permission_classes([AllowAny,])
 def signup(request):
     if request.data.get('password') is not None:
         data = request.data
     else:
         data = request.query_params
 
-    # исправить поле др по умолчанию
     serializer = RegisterSerializer(data=data)
     if serializer.is_valid():
         if not CustomUser.objects.filter(username=data['email']).exists():
@@ -74,12 +94,15 @@ def signup(request):
                 birth = datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d')
             except:
                 birth = None
+
+            print(birth)
+
             try:
                 user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
                 user.set_password(user.password)
                 user.save()
                 refresh = RefreshToken.for_user(user)
-                return Response({'refresh' : str(refresh), 'access': str(refresh.access_token)}, status=status.HTTP_201_CREATED)
+                return Response({'refresh' : str(refresh), 'access': str(refresh.access_token), 'user': user_data(user)}, status=status.HTTP_201_CREATED)
             except:
                 return Response({'message':'Login Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -123,7 +146,7 @@ def signin(request):
 
     if user.check_password(data['password']):
         refresh = RefreshToken.for_user(user)
-        return Response({'refresh' : str(refresh), 'access': str(refresh.access_token)}, status=status.HTTP_200_OK)
+        return Response({'refresh' : str(refresh), 'access': str(refresh.access_token), 'user': user_data(user)}, status=status.HTTP_200_OK)
     else:
         return Response({'message':'Invalid Password'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -174,23 +197,7 @@ def get_users(request):
     profiles = []
 
     for user in CustomUser.objects.all():
-        try:
-            birth = datetime.strptime(str(user.birth_date), '%Y-%m-%d').strftime('%d.%m.%Y')
-        except:
-            birth = None
-
-        profiles.append({
-            'username': user.username,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'slug': user.slug,
-            'birth_date': birth,
-            'photo': user.photo.name,
-            'description': user.description,
-            'language': user.language,
-            # 'views': user.views,
-            'stars': StarsJson.parse(user.stars_freelancer)
-        })
+        profiles.append(user_data(user))
 
     return Response({'users': profiles}, status=status.HTTP_201_CREATED)
 
