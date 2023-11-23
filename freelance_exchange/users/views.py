@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -47,6 +47,7 @@ def user_data(user) -> dict:
         'first_name': user.first_name,
         'last_name': user.last_name,
         'slug': user.slug,
+        'email': user.email,
         'birth_date': birth,
         'photo': user.photo.name,
         'description': user.description,
@@ -199,12 +200,19 @@ def get_users(request):
 
     return Response({'users': profiles}, status=status.HTTP_201_CREATED)
 
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def get_me(request):
+    user = check_token(request)
+
+    return Response({'user': user_data(user)}, status=status.HTTP_201_CREATED)
+
 
 def home_view(request):
     profiles = []
 
     for user in CustomUser.objects.all():
-        profiles.append({'user': user, 'stars': StarsJson.parse(user.stars_freelancer)})
+        profiles.append(user_data(user))
 
     context = {
         'user': request.user,
