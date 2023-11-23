@@ -66,9 +66,10 @@ urlpatterns = [
     path('api/stars/edit/<slug:username>/', set_user_stars),
     path('api/stars/delete/<slug:username>/', delete_user_stars),
     path('adsview/<int:id>', ad_view),
-    path('api/ads/<int:id>/', api_ad_view)
+    path('api/ads/<int:id>/', api_ad_view),
     path('api/ad_responses/', get_responses),
-    path('ad/set_executor/', set_executor),
+    path('api/ad/set_executor/', set_executor),
+    path('api/users/me', get_me),
 ]
 
 if settings.DEBUG:
