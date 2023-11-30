@@ -176,7 +176,7 @@ def get_access_token(request):
     try:
         access = RefreshToken(data.get('refresh'))
     except:
-        return Response({'message':'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({'access': str(access)}, status=status.HTTP_200_OK)
 
@@ -200,10 +200,13 @@ def get_users(request):
 
     return Response({'users': profiles}, status=status.HTTP_201_CREATED)
 
+
 @swagger_auto_schema(method='get')
 @api_view(['GET'])
 def get_me(request):
     user = check_token(request)
+    if not user:
+        return Response({'error': 'Non authorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     return Response({'user': user_data(user)}, status=status.HTTP_201_CREATED)
 
@@ -228,7 +231,7 @@ def me(request):
     if (request.user.isauthenticated()):
         return profile(request, request.user.slug)
     
-    return Response('Not logged in.')
+    return Response({'error': 'Non authorized'})
 
 
 def profile(request, slug_name):

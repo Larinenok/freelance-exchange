@@ -32,7 +32,7 @@ class CustomUser(AbstractUser):
     stars_customer = models.JSONField(default=dict, blank=True, null=True)
 
     def __str__(self):
-        return self.slug
+        return self.username
 
     class Meta:
         verbose_name = 'Пользователь'
