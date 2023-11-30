@@ -12,24 +12,72 @@ from drf_yasg import openapi
 from pytils.translit import slugify
 
 
+# def all_ads(request):
+#     ads = []
+#     for ad in Ad.objects.all():
+#         ads.append({'ad': ad})
+#
+#     context = {
+#         'ads': ads,
+#     }
+#     return render(request, 'all_ads.html', context)
+
+@api_view(['GET'])
 def all_ads(request):
     ads = []
     for ad in Ad.objects.all():
-        ads.append({'ad': ad})
+        files = AdFile.objects.filter(ad=ad.id)
+        ads.append({'ad': {
+            'author': ad.author.first_name,
+            'title': ad.title,
+            'id': ad.id,
+            'slug': ad.slug,
+            'description': ad.description,
+            'category': ad.category,
+            'budget': ad.budget,
+            'pub_date': ad.pub_date,
+            'contact_info': ad.contact_info,
+            'files': files,
+        }})
 
     context = {
         'ads': ads,
     }
-    return render(request, 'all_ads.html', context)
+
+    return Response(context, status=status.HTTP_200_OK)
 
 
-@swagger_auto_schema(method='get', manual_parameters=[
-        openapi.Parameter('id', openapi.IN_QUERY, description='id', type=openapi.TYPE_INTEGER, required=True),
-])
-@api_view(['GET'])
-def api_ad_view(request, id):
-    ad = get_object_or_404(Ad, id=id)
-    files = AdFile.objects.filter(ad=ad)
+@swagger_auto_schema(method='post',
+    operation_id="get_ad",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(type=openapi.TYPE_INTEGER, title='ID of the Ad'),
+        },
+        required=['id']
+    ),
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'ad': openapi.Schema(type=openapi.TYPE_STRING, title='The Ad'),
+})})
+# @swagger_auto_schema(method='get', manual_parameters=[
+#         openapi.Parameter('id', openapi.IN_QUERY, description='id', type=openapi.TYPE_INTEGER, required=True),
+# ])
+@api_view(['POST'])
+def api_ad_view(request):
+    if request.data.get('id') is not None:
+        data = request.data
+    else:
+        data = request.query_params
+
+    try:
+        ad = Ad.objects.get(id=data.get('id'))
+    except:
+        return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    files = AdFile.objects.filter(ad=data.get(ad))
     context = {
         'author': ad.author.first_name,
         'title': ad.title,
@@ -57,41 +105,55 @@ def ad_view(request, id, slug):
     return render(request, 'ad_view.html', context)
 
 
-
-#                             #
-# ----------- ads ----------- #
-#                             #
-@swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad',
-                      required=True),
-    openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad',
-                      required=True),
-    openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad',
-                      required=True),
-    openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad',
-                      required=True),
-    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                      description='Contact information for the Ad', required=True),
-    openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad', required=True),
-])
+@swagger_auto_schema(method='post',
+    operation_id="create_ad",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'title': openapi.Schema(type=openapi.TYPE_STRING, title='Title of the Ad'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, title='Description of the Ad'),
+            'category': openapi.Schema(type=openapi.TYPE_STRING, title='Category of the Ad'),
+            'budget': openapi.Schema(type=openapi.TYPE_INTEGER, title='Budget of the Ad'),
+            'contact_info': openapi.Schema(type=openapi.TYPE_STRING, title='Contact information for the Ad'),
+            'files': openapi.Schema(type=openapi.TYPE_FILE, title='Files of the Ad'),
+        },
+        required=['title', 'description', 'category', 'budget', 'contact_info']
+    ),
+    responses={
+        status.HTTP_200_OK: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, title='Result of creation the Ad'),
+})})
+# @swagger_auto_schema(method='post', manual_parameters=[
+#     openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad',
+#                       required=True),
+#     openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad',
+#                       required=True),
+#     openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad',
+#                       required=True),
+#     openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad',
+#                       required=True),
+#     openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING,
+#                       description='Contact information for the Ad', required=True),
+#     openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad', required=True),
+# ])
 @api_view(['POST'])
 def create_ad(request):
     author = check_token(request)
     if not author:
-        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Non authorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    try:
-        title = request.query_params.get('title')
-        description = request.query_params.get('description')
-        budget = request.query_params.get('budget')
-        category = request.query_params.get('category')
-        contact_info = request.query_params.get('contact_info')
-    except:
-        title = request.data.get('title')
-        description = request.data.get('description')
-        budget = request.data.get('budget')
-        category = request.data.get('category')
-        contact_info = request.data.get('contact_info')
+    if request.data.get('title') is not None:
+        data = request.data
+    else:
+        data = request.query_params
+
+    title = data.get('title')
+    description = data.get('description')
+    budget = data.get('budget')
+    category = data.get('category')
+    contact_info = data.get('contact_info')
 
     ad = Ad.objects.create(
         author=author,
@@ -203,8 +265,6 @@ def set_executor(request):
             return Response({'error': 'There is no response with this id for ad'}, status=status.HTTP_201_CREATED)
     except Ad.DoesNotExist:
         return Response({'error': 'Ad not found!'}, status=404)
-
-
 
 
 @swagger_auto_schema(method='put', manual_parameters=[

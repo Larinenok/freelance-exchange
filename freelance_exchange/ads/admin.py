@@ -10,11 +10,12 @@ class AdResponseAdmin(admin.StackedInline):
 
 class AdAdmin(admin.ModelAdmin):
     model = Ad
+    readonly_fields = ('id',)
     fieldsets = [
-        ("Title/category", {"fields": ["title", "category", "slug"]}),
-        ("Content", {"fields": ["description", "budget"]}),
-        ("Author", {"fields": ["author", "contact_info"]}),
-        ("Executor", {"fields": ["executor"]}),
+        ('Title/category', {'fields': ['title', 'category', 'slug', 'id']}),
+        ('Content', {'fields': ['description', 'budget']}),
+        ('Author', {'fields': ['author', 'contact_info']}),
+        ('Executor', {'fields': ['executor']}),
     ]
     inlines = [AdFileAdmin]
     inlines = [AdResponseAdmin]

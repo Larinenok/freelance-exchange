@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import signin, signup, get_users, get_access_token
+from .views import signin, signup, get_users, get_access_token, get_me
 
 
 urlpatterns = [
@@ -11,4 +11,5 @@ urlpatterns = [
     path('register/', signup, name='register_token'),
     path('refresh/', get_access_token, name='refresh_token'),
     path('list/', get_users, name='list_user'),
+    path('me/', get_me, name='user'),
 ]

@@ -19,7 +19,7 @@ from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from rest_framework_simplejwt.views import TokenRefreshView
+# from rest_framework_simplejwt.views import TokenRefreshView
 
 from freelance_exchange import settings
 from users.views import *
@@ -54,22 +54,24 @@ urlpatterns = [
     # path('api-token-auth/', views.obtain_auth_token),
     path('admin/', admin.site.urls),
     path('profile/<slug:slug_name>/', profile),
+    # --- USERS ---
     path('api/users/', include('users.urls')),
     path('me/', me),
-    path('api/ads/', all_ads),
+    # --- ADS ---
+    path('api/ad/list/', all_ads),
     path('api/ad/create/', create_ad),
     path('api/ad/edit/', edit_ad),
-    path('api/ad/delete', delete_ad),
-    path('api/ad/upload/files', AdFileUploadView.as_view(), name='file_upload'),
+    path('api/ad/delete/', delete_ad),
+    path('api/ad/upload/files/', AdFileUploadView.as_view(), name='file_upload'),
+    path('api/ad/get/', api_ad_view),
+    path('api/ad_responses/', get_responses),
+    path('api/ad/set_executor/', set_executor),
+    path('adsview/<int:id>/', ad_view),
+    # --- STARS ---
     path('api/stars/', get_all_users_stars),
     path('api/stars/<slug:username>/', get_user_stars),
     path('api/stars/edit/<slug:username>/', set_user_stars),
     path('api/stars/delete/<slug:username>/', delete_user_stars),
-    path('adsview/<int:id>', ad_view),
-    path('api/ads/<int:id>/', api_ad_view),
-    path('api/ad_responses/', get_responses),
-    path('api/ad/set_executor/', set_executor),
-    path('api/users/me', get_me),
 ]
 
 if settings.DEBUG:

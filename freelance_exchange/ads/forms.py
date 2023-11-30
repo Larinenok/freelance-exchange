@@ -6,7 +6,7 @@ class AdForm(forms.ModelForm):
     files = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
     class Meta:
         model = Ad
-        fields = ('title', 'author','id')
+        fields = ('title', 'author')
 
 
 class FileFieldForm(forms.Form):

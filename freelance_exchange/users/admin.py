@@ -12,9 +12,9 @@ class CustomUserAdmin(admin.ModelAdmin):
     model = CustomUser
     list_display = ('username', 'email')
     fieldsets = (('Main Fields',
-                  {'fields': (
-                                    'first_name', 'last_name', 'username', 'slug', 'email', 'photo',
-                                    'description', 'language', 'views', 'stars_freelancer', 'stars_customer',)}),)
+        {'fields': (
+            'first_name', 'last_name', 'username', 'slug', 'email', 'photo',
+            'description', 'language', 'views', 'stars_freelancer', 'stars_customer',)}),)
     prepopulated_fields = {'slug': ('username',)}
 
 
