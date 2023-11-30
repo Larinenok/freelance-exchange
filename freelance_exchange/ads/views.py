@@ -205,10 +205,6 @@ def delete_ad(request):
             properties={
                 'message': openapi.Schema(type=openapi.TYPE_STRING, title='Result of deletion the Ad'),
 })})
-# @swagger_auto_schema(method='post', manual_parameters=[
-#     openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER),
-#     openapi.Parameter('comment', openapi.IN_QUERY, description='Response comment to Ad', type=openapi.TYPE_STRING),
-# ])
 @api_view(['POST'])
 def response_ad(request):
     user = check_token(request)
@@ -248,9 +244,6 @@ def response_ad(request):
             properties={
                 'responses': openapi.Schema(type=openapi.TYPE_STRING, title='Responses'),
 })})
-# @swagger_auto_schema(method='get', manual_parameters=[
-#     openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER),
-# ])
 @api_view(['post'])
 def get_responses(request):
     responses = []
@@ -296,10 +289,6 @@ def get_responses(request):
             properties={
                 'message': openapi.Schema(type=openapi.TYPE_STRING, title='Result'),
 })})
-# @swagger_auto_schema(method='post', manual_parameters=[
-#     openapi.Parameter('ad_id', openapi.IN_QUERY, description='id of ad', type=openapi.TYPE_INTEGER),
-#     openapi.Parameter('response_id', openapi.IN_QUERY, description='id of response', type=openapi.TYPE_STRING),
-# ])
 @api_view(['post'])
 def set_executor(request):
     user = check_token(request)
@@ -326,16 +315,6 @@ def set_executor(request):
         return Response({'error': 'Ad not found!'}, status=404)
 
 
-# @swagger_auto_schema(method='put', manual_parameters=[
-#     openapi.Parameter('id', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the AD', required=True),
-#     openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad'),
-#     openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad'),
-#     openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad'),
-#     openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
-#     openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING,
-#                       description='Contact information for the Ad'),
-#     openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad'),
-# ])
 @swagger_auto_schema(method='put',
     operation_description="Edit the Ad",
     request_body=openapi.Schema(

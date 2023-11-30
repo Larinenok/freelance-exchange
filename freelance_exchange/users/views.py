@@ -198,7 +198,7 @@ def get_users(request):
     for user in CustomUser.objects.all():
         profiles.append(user_data(user))
 
-    return Response({'users': profiles}, status=status.HTTP_201_CREATED)
+    return Response({'users': profiles}, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(method='get')
@@ -208,7 +208,7 @@ def get_me(request):
     if not user:
         return Response({'error': 'Non authorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    return Response({'user': user_data(user)}, status=status.HTTP_201_CREATED)
+    return Response({'user': user_data(user)}, status=status.HTTP_200_OK)
 
 
 def home_view(request):

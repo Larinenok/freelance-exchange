@@ -33,7 +33,7 @@ def get_user_stars(request, username):
 
         return Response(StarsJson.parse(user.stars_freelancer))
     except:
-        return Response('''Username not found''', status='401')
+        return Response({'error': 'Username not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @swagger_auto_schema(method='put', manual_parameters=[
@@ -44,7 +44,7 @@ def get_user_stars(request, username):
 def set_user_stars(request, username):
     user_by_token = check_token(request)
     if not user_by_token:
-        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Non authorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     try:
         whose = str(request.data.get('whose'))
@@ -54,13 +54,13 @@ def set_user_stars(request, username):
             whose = str(request.query_params.get('whose'))
             value = int(request.query_params.get('value'))
         except:
-            return Response('''Require "whose" and "value" parameters''', status='401')
+            return Response({'error': 'Require "whose" and "value" parameters'}, status=status.HTTP_404_NOT_FOUND)
 
     try:
         user = get_object_or_404(CustomUser, slug=str(username))
 
         if user != user_by_token:
-            return Response('''You can only change your reviews''', status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'You can only change your reviews'}, status=status.HTTP_401_UNAUTHORIZED)
 
         stars = json.dumps(StarsJson.add_star(user.stars_freelancer, username=whose, value=value))
         user.stars_freelancer = stars
@@ -68,7 +68,7 @@ def set_user_stars(request, username):
 
         return Response({'result': stars})
     except:
-        return Response('''Username not found''', status='401')
+        return Response({'error': 'Username not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @swagger_auto_schema(method='delete', manual_parameters=[
@@ -78,7 +78,7 @@ def set_user_stars(request, username):
 def delete_user_stars(request, username):
     user_by_token = check_token(request)
     if not user_by_token:
-        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Non authorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     try:
         whose = str(request.data.get('whose'))
@@ -88,13 +88,13 @@ def delete_user_stars(request, username):
         try:
             whose = str(request.query_params.get('whose'))
         except:
-            return Response('''Require "whose" parameter''', status='401')
+            return Response({'error': 'Require "whose" parameter'}, status=status.HTTP_404_NOT_FOUND)
 
     try:
         user = get_object_or_404(CustomUser, slug=username)
 
         if user != user_by_token:
-            return Response('''You can only change your reviews''', status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'You can only change your reviews'}, status=status.HTTP_401_UNAUTHORIZED)
 
         stars = json.dumps(StarsJson.remove_star(user.stars_freelancer, username=whose))
         user.stars_freelancer = stars
@@ -102,4 +102,4 @@ def delete_user_stars(request, username):
 
         return Response({'result': stars})
     except:
-        return Response('''Non-correct data''', status='401')
+        return Response({'error': 'Non-correct data'}, status=status.HTTP_404_NOT_FOUND)
