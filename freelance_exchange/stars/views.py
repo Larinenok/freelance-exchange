@@ -8,6 +8,7 @@ from stars.models import *
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+@swagger_auto_schema(method='get', operation_description='Get all stars')
 @api_view(['GET'])
 def get_all_users_stars(request):
     users = CustomUser.objects.all()

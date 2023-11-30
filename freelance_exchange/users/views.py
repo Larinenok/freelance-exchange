@@ -61,7 +61,7 @@ def user_data(user) -> dict:
 # -------- register --------- #
 #                             #
 @swagger_auto_schema(method='post',
-    operation_id="register",
+    operation_description='register',
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
@@ -190,7 +190,7 @@ def get_client_ip(request):
     return ip
 
 
-@swagger_auto_schema(method='get')
+@swagger_auto_schema(method='get', operation_description='Get all users')
 @api_view(['GET'])
 def get_users(request):
     profiles = []

@@ -56,22 +56,10 @@ urlpatterns = [
     path('profile/<slug:slug_name>/', profile),
     # --- USERS ---
     path('api/users/', include('users.urls')),
-    path('me/', me),
     # --- ADS ---
-    path('api/ad/list/', all_ads),
-    path('api/ad/create/', create_ad),
-    path('api/ad/edit/', edit_ad),
-    path('api/ad/delete/', delete_ad),
-    path('api/ad/upload/files/', AdFileUploadView.as_view(), name='file_upload'),
-    path('api/ad/get/', api_ad_view),
-    path('api/ad_responses/', get_responses),
-    path('api/ad/set_executor/', set_executor),
-    path('adsview/<int:id>/', ad_view),
+    path('api/ad/', include('ads.urls')),
     # --- STARS ---
-    path('api/stars/', get_all_users_stars),
-    path('api/stars/<slug:username>/', get_user_stars),
-    path('api/stars/edit/<slug:username>/', set_user_stars),
-    path('api/stars/delete/<slug:username>/', delete_user_stars),
+    path('api/stars/', include('stars.urls'))
 ]
 
 if settings.DEBUG:
