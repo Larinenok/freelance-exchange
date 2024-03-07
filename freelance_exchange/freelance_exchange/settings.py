@@ -49,8 +49,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'ads.apps.AdsConfig',
-    'stars.apps.StarsConfig'
-    # 'djoser'
+    'stars.apps.StarsConfig',
 ]
 
 REST_FRAMEWORK = {
@@ -120,24 +119,31 @@ WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+#
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db'
+    }
+}
 
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': 'db'
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': config('POSTGRES_DB'),
+#         'USER': config('POSTGRES_USER'),
+#         'PASSWORD': config('POSTGRES_PASSWORD'),
+#         'HOST': 'db_freelance_exchange',
+#         'PORT': '5432',
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB'),
-        'USER': config('POSTGRES_USER'),
-        'PASSWORD': config('POSTGRES_PASSWORD'),
-        'HOST': 'db_freelance_exchange',
-        'PORT': '5432',
-    }
+GRAPH_MODELS = {
+  'all_applications': True,
+  'group_models': True,
 }
+
+
 
 CORS_ALLOW_METHODS = [
     'DELETE',
