@@ -146,6 +146,47 @@ def add_file_to_ad(request):
     return Response({'message': 'File added successfully'})
 
 
+@swagger_auto_schema(method='get', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+])
+@api_view(['GET'])
+def list_files_for_ad(request):
+    ad_id = request.query_params.get('ad_id')
+
+    if not ad_id:
+        return Response({'error': 'Ad ID is required'}, status=400)
+
+    ad = get_object_or_404(Ad, id=ad_id)
+    files = ad.files.all()
+
+    files_info = [{'id': file.id, 'name': file.file.name} for file in files]
+
+    return Response({'files': files_info})
+
+
+@swagger_auto_schema(method='delete', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+    openapi.Parameter('file_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the File to delete', required=True),
+])
+@api_view(['DELETE'])
+def delete_file_from_ad(request):
+    author = check_token(request)
+    if not author:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+    ad_id = request.query_params.get('ad_id')
+    file_id = request.query_params.get('file_id')
+
+    if not ad_id or not file_id:
+        return Response({'error': 'Ad ID and File ID are required'}, status=400)
+
+    ad = get_object_or_404(Ad, id=ad_id)
+
+    file_object = get_object_or_404(AdFile, id=file_id)
+    ad.files.remove(file_object)
+
+    return Response({'message': 'File removed successfully'})
+
+
 @swagger_auto_schema(method='delete', manual_parameters=[
     openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)])
 @api_view(['DELETE'])

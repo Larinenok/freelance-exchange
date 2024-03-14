@@ -41,6 +41,7 @@ class AdResponse(models.Model):
 class AdFile(models.Model):
     # ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')
     file = models.FileField(upload_to='files', verbose_name='Файл')
+    id = models.AutoField(primary_key=True)
 
     class Meta:
         verbose_name = 'Файлы из объявлений'

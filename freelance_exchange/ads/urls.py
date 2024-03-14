@@ -13,6 +13,8 @@ urlpatterns = [
     path('set_executor/', set_executor),
     path('adsview/<int:id>/', ad_view),
     path('send_response/', response_ad),
-    path('list/', get_ads),
+    path('ad_list/', get_ads),
     path('upload_files/', add_file_to_ad),
+    path('file_list/', list_files_for_ad),
+    path('file_delete/', delete_file_from_ad),
 ]
