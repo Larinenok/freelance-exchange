@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from .serializers import AdSerializer, AdFileSerializer
 from rest_framework import generics, status
@@ -22,19 +22,12 @@ def all_ads(request):
     }
     return render(request, 'all_ads.html', context)
 
-def ad_data(ad) -> dict:
-    if not ad.executor:
-        executor_name = 'None'
-    else:
-        executor_name = ad.executor.slug
 
-    files = AdFile.objects.filter(ad=ad)
-    files_query = []
-    if not files:
-        files_query.append('None')
-    else:
-        for file in files:
-            files_query.append(file.file.name)
+def ad_data(ad: Ad) -> dict:
+    executor_name = ad.executor.slug if ad.executor else 'None'
+
+    files_query = [file.file.name for file in ad.files.all()] if ad.files.exists() else ['None']
+
     return {
         'author': ad.author.slug,
         'executor': executor_name,
@@ -85,20 +78,15 @@ def ad_view(request, id, slug):
 # ----------- ads ----------- #
 #                             #
 @swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad',
-                      required=True),
-    openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad',
-                      required=True),
-    openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad',
-                      required=True),
-    openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad',
-                      required=True),
-    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                      description='Contact information for the Ad', required=True),
-    openapi.Parameter('file', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad', required=True),
+    openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad', required=True),
+    openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad', required=True),
+    openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad', required=True),
+    openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad', required=True),
+    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad', required=True),
+    openapi.Parameter('files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, description='Files to upload with the Ad'),
 ])
-## ТУТ НАДО ДОДЕЛАТЬ ЧТОБЫ ФАЙЛ НОРМАЛЬНО ЗАГРУЖАЛСЯ А ТО ОН ПОЧЕМУ ТО НЕ ЗАГРУЖАЕТСЯ Я НЕ ПОНИМАЮ ПОЧЕМУ
 @api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
 def create_ad(request):
     author = check_token(request)
     if not author:
@@ -110,14 +98,15 @@ def create_ad(request):
         budget = request.query_params.get('budget')
         category = request.query_params.get('category')
         contact_info = request.query_params.get('contact_info')
-        file = request.query_params.get('file')
+        files = request.FILES.getlist('files')
     except:
         title = request.data.get('title')
         description = request.data.get('description')
         budget = request.data.get('budget')
         category = request.data.get('category')
         contact_info = request.data.get('contact_info')
-        file = request.query_params.get('file')
+        files = request.FILES.getlist('files')
+
     ad = Ad.objects.create(
         author=author,
         title=title,
@@ -127,14 +116,34 @@ def create_ad(request):
         budget=budget,
         contact_info=contact_info,
     )
-    file = AdFile.objects.create(
-        ad=ad,
-        file=file,
-    )
-    print(file.file.name)
-    file.save()
-    ad.save()
+
+    for file in files:
+        file_object = AdFile.objects.create(file=file)
+        ad.files.add(file_object)
+
     return Response({'message': 'Ad created successfully'})
+
+
+@swagger_auto_schema(method='post', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+    openapi.Parameter('file', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, description='File to upload', required=True),
+])
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def add_file_to_ad(request):
+    author = check_token(request)
+    if not author:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
+    ad_id = request.query_params.get('ad_id')
+    file = request.FILES.get('file')
+
+    ad = get_object_or_404(Ad, id=ad_id)
+
+    file_object = AdFile.objects.create(file=file)
+    ad.files.add(file_object)
+
+    return Response({'message': 'File added successfully'})
 
 
 @swagger_auto_schema(method='delete', manual_parameters=[
@@ -244,9 +253,7 @@ def set_executor(request):
     openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad'),
     openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad'),
     openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
-    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                      description='Contact information for the Ad'),
-    openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad'),
+    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad'),
 ])
 @api_view(['PUT'])
 def edit_ad(request):

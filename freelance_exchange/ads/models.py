@@ -14,6 +14,7 @@ class Ad(models.Model):
     budget = models.IntegerField(verbose_name='Бюджет')
     pub_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     contact_info = models.CharField(max_length=200, verbose_name='Контактная информация')
+    files = models.ManyToManyField('AdFile', related_name='ads', verbose_name='Файлы', blank=True)
     # В КОДЕ НЕ ИСПОЛЬЗУЕТСЯ ¯\_(ツ)_/¯ НО МАЛО ЛИ
     responders = models.ManyToManyField(CustomUser, through='AdResponse', related_name='ads_responded', verbose_name='Откликнувшиеся')
 
@@ -38,7 +39,7 @@ class AdResponse(models.Model):
         return self.responder.username
 
 class AdFile(models.Model):
-    ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')
+    # ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')
     file = models.FileField(upload_to='files', verbose_name='Файл')
 
     class Meta:
@@ -46,4 +47,4 @@ class AdFile(models.Model):
         verbose_name_plural = 'Файлы из объявлений'
 
     def __str__(self):
-        return os.path.basename(self.file.name)
+        return self.file.name
