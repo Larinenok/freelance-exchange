@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'ads.apps.AdsConfig',
     'stars.apps.StarsConfig',
+    'telegram_bot'
+    # 'djoser'
 ]
 
 REST_FRAMEWORK = {
@@ -127,6 +129,13 @@ DATABASES = {
     }
 }
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db'
+    }
+}
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -142,7 +151,6 @@ GRAPH_MODELS = {
   'all_applications': True,
   'group_models': True,
 }
-
 
 
 CORS_ALLOW_METHODS = [
