@@ -194,6 +194,21 @@ def delete_file_from_ad(request):
     return Response({'message': 'File removed successfully'})
 
 
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def my_ads(request):
+    profiles = []
+    user = check_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=401)
+
+    ads = Ad.objects.filter(author=user)
+    for ad in ads:
+        profiles.append(ad_data(ad))
+
+    return Response({'ads': profiles}, status=status.HTTP_201_CREATED)
+
+
 @swagger_auto_schema(method='post', manual_parameters=[
     openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
 ])
