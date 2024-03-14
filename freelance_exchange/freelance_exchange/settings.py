@@ -121,6 +121,13 @@ WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+#
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db'
+    }
+}
 
 DATABASES = {
     'default': {
@@ -139,6 +146,12 @@ DATABASES = {
 #         'PORT': '5432',
 #     }
 # }
+
+GRAPH_MODELS = {
+  'all_applications': True,
+  'group_models': True,
+}
+
 
 CORS_ALLOW_METHODS = [
     'DELETE',

@@ -10,7 +10,9 @@ urlpatterns = [
     path('delete/', delete_ad),
     path('upload/files/', AdFileUploadView.as_view(), name='file_upload'),
     path('get/', api_ad_view),
-    path('ad_responses/', get_responses),
+    path('get_responses/', get_responses),
     path('set_executor/', set_executor),
     path('adsview/<int:id>/', ad_view),
+    path('send_response/', response_ad),
+    path('list/', get_ads),
 ]
