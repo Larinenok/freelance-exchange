@@ -10,6 +10,7 @@ from users.views import check_token
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
+from django.utils import timezone
 
 
 def all_ads(request):
@@ -38,7 +39,9 @@ def ad_data(ad: Ad) -> dict:
         'category': ad.category,
         'budget': ad.budget,
         'pub_date': ad.pub_date,
+        'close_date': ad.closed_date,
         'contact_info': ad.contact_info,
+        'status': ad.status,
         'files': files_query,
     }
 
@@ -131,14 +134,16 @@ def create_ad(request):
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
 def add_file_to_ad(request):
-    author = check_token(request)
-    if not author:
+    user = check_token(request)
+    if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
     ad_id = request.query_params.get('ad_id')
     file = request.FILES.get('file')
 
     ad = get_object_or_404(Ad, id=ad_id)
+    if ad.author != user and not request.user.is_superuser:
+        return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
 
     file_object = AdFile.objects.create(file=file)
     ad.files.add(file_object)
@@ -170,8 +175,8 @@ def list_files_for_ad(request):
 ])
 @api_view(['DELETE'])
 def delete_file_from_ad(request):
-    author = check_token(request)
-    if not author:
+    user = check_token(request)
+    if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
     ad_id = request.query_params.get('ad_id')
     file_id = request.query_params.get('file_id')
@@ -180,11 +185,37 @@ def delete_file_from_ad(request):
         return Response({'error': 'Ad ID and File ID are required'}, status=400)
 
     ad = get_object_or_404(Ad, id=ad_id)
+    if ad.author != user and not request.user.is_superuser:
+        return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
 
     file_object = get_object_or_404(AdFile, id=file_id)
     ad.files.remove(file_object)
 
     return Response({'message': 'File removed successfully'})
+
+
+@swagger_auto_schema(method='post', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+])
+@api_view(['POST'])
+def close_ad(request):
+    user = check_token(request)
+    if not user:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+    ad_id = request.query_params.get('ad_id')
+
+    if not ad_id:
+        return Response({'error': 'Ad ID is required'}, status=400)
+
+    ad = get_object_or_404(Ad, id=ad_id)
+    if ad.author != user and not request.user.is_superuser:
+        return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    ad.status = Ad.CLOSED
+    ad.closed_date = timezone.now()
+    ad.save()
+
+    return Response({'message': 'Ad closed successfully'})
 
 
 @swagger_auto_schema(method='delete', manual_parameters=[
@@ -220,6 +251,8 @@ def response_ad(request):
     comment = request.query_params.get('comment')
     try:
         ad = Ad.objects.get(id=id)
+        if ad.status != Ad.OPEN:
+            return Response({'error': 'This AD is not open'}, status=status.HTTP_400_BAD_REQUEST)
         ad_response = AdResponse.objects.create(
             ad=ad,
             responder=user,
@@ -278,6 +311,7 @@ def set_executor(request):
             return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
         if response.ad == ad:
             ad.executor = response.responder
+            ad.status = Ad.IN_PROGRESS
             ad.save()
             return Response({'Executor set successfully'}, status=status.HTTP_201_CREATED)
         else:
