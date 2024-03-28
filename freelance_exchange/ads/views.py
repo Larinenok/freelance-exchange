@@ -27,7 +27,7 @@ def ad_data(ad: Ad) -> dict:
     executor_name = ad.executor.slug if ad.executor else 'None'
     response_count = AdResponse.objects.filter(ad=ad).count()
 
-    files_query = [file.file.name for file in ad.files.all()] if ad.files.exists() else ['None']
+    files_query = [({'name': file.file.name, 'file_id': file.id}) for file in ad.files.all()] if ad.files.exists() else ['None']
 
     return {
         'author': ad.author.slug,
