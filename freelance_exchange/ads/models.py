@@ -11,6 +11,7 @@ class Ad(models.Model):
     slug = models.SlugField(max_length=210, unique=False, null=True)
     description = models.TextField(max_length=1000, verbose_name='Описание')
     category = models.CharField(max_length=100, verbose_name='Категория')
+    type = models.CharField(max_length=100, verbose_name='Вид', blank=True, null=True)
     budget = models.IntegerField(verbose_name='Бюджет')
     pub_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     contact_info = models.CharField(max_length=200, verbose_name='Контактная информация')

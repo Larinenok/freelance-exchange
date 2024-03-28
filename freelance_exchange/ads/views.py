@@ -31,12 +31,15 @@ def ad_data(ad: Ad) -> dict:
 
     return {
         'author': ad.author.slug,
+        'author firstname': ad.author.first_name,
+        'author lastname': ad.author.last_name,
         'executor': executor_name,
         'title': ad.title,
         'id': ad.id,
         'slug': ad.slug,
         'description': ad.description,
         'category': ad.category,
+        'type': ad.type,
         'budget': ad.budget,
         'pub_date': ad.pub_date,
         'close_date': ad.closed_date,
@@ -84,6 +87,7 @@ def ad_view(request, id, slug):
     openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad', required=True),
     openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad', required=True),
     openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad', required=True),
+    openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Type of the Ad', required=True),
     openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad', required=True),
     openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad', required=True),
     openapi.Parameter('files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, description='Files to upload with the Ad'),
@@ -100,6 +104,7 @@ def create_ad(request):
         description = request.query_params.get('description')
         budget = request.query_params.get('budget')
         category = request.query_params.get('category')
+        type = request.query_params.get('type')
         contact_info = request.query_params.get('contact_info')
         files = request.FILES.getlist('files')
     except:
@@ -107,6 +112,7 @@ def create_ad(request):
         description = request.data.get('description')
         budget = request.data.get('budget')
         category = request.data.get('category')
+        type = request.data.get('type')
         contact_info = request.data.get('contact_info')
         files = request.FILES.getlist('files')
 
@@ -116,6 +122,7 @@ def create_ad(request):
         slug=slugify(title),
         description=description,
         category=category,
+        type=type,
         budget=budget,
         contact_info=contact_info,
     )
@@ -342,6 +349,7 @@ def set_executor(request):
     openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad'),
     openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad'),
     openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad'),
+    openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Type of the Ad'),
     openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
     openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad'),
 ])
@@ -360,12 +368,14 @@ def edit_ad(request):
             title = request.query_params.get('title', ad.title)
             description = request.query_params.get('description', ad.description)
             category = request.query_params.get('category', ad.category)
+            type = request.query_params.get('type', ad.type)
             budget = request.query_params.get('budget', ad.budget)
             contact_info = request.query_params.get('contact_info', ad.contact_info)
         except:
             title = request.data.get('title', ad.title)
             description = request.data.get('description', ad.description)
             category = request.data.get('category', ad.category)
+            type = request.data.get('type', ad.type)
             budget = request.data.get('budget', ad.budget)
             contact_info = request.data.get('contact_info', ad.contact_info)
 
@@ -374,6 +384,7 @@ def edit_ad(request):
         ad.slug = slugify(title)
         ad.description = description
         ad.category = category
+        ad.type = type
         ad.budget = budget
         ad.contact_info = contact_info
         ad.save()
