@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from .serializers import AdSerializer, AdFileSerializer
 from rest_framework import generics, status
 from .models import *
-from users.views import check_token
+#from users.views import check_token
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
@@ -100,7 +100,7 @@ def ad_view(request, id, slug):
 ## ТУТ НАДО ДОДЕЛАТЬ ЧТОБЫ ФАЙЛ НОРМАЛЬНО ЗАГРУЖАЛСЯ А ТО ОН ПОЧЕМУ ТО НЕ ЗАГРУЖАЕТСЯ Я НЕ ПОНИМАЮ ПОЧЕМУ
 @api_view(['POST'])
 def create_ad(request):
-    author = check_token(request)
+    #author = check_token(request)
     if not author:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -141,7 +141,7 @@ def create_ad(request):
     openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)])
 @api_view(['DELETE'])
 def delete_ad(request):
-    user = check_token(request)
+    #user = check_token(request)
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -162,7 +162,7 @@ def delete_ad(request):
 ])
 @api_view(['POST'])
 def response_ad(request):
-    user = check_token(request)
+    #user = check_token(request)
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -187,7 +187,7 @@ def response_ad(request):
 @api_view(['get'])
 def get_responses(request):
     responses = []
-    user = check_token(request)
+    #user = check_token(request)
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -215,7 +215,7 @@ def get_responses(request):
 ])
 @api_view(['post'])
 def set_executor(request):
-    user = check_token(request)
+    #user = check_token(request)
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -250,7 +250,7 @@ def set_executor(request):
 ])
 @api_view(['PUT'])
 def edit_ad(request):
-    user = check_token(request)
+    #user = check_token(request)
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 

@@ -1,15 +1,11 @@
 from django.urls import path
-
-from .views import signin, signup, get_users, get_access_token, get_me
+from .views import APIUser, DetailUserView, UserLoginAPIView, UserRegistrationAPIView, UserProfileView
 
 
 urlpatterns = [
-    # path('login/', MyObtainTokenPairView.as_view(), name='token_obtain_pair'),
-    # path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    # path('register/', RegisterView.as_view(), name='auth_register'),
-    path('login/', signin, name='login_token'),
-    path('register/', signup, name='register_token'),
-    path('refresh/', get_access_token, name='refresh_token'),
-    path('', get_users, name='list_user'),
-    path('me/', get_me, name='user'),
+    path('list/', APIUser.as_view(), name='list_user'),
+    path('login/', UserLoginAPIView.as_view()),
+    path('register/', UserRegistrationAPIView.as_view(), name='register_user'),
+    path('profile/', DetailUserView.as_view(), name='my_profile'),
+    path('<slug:slug>/', UserProfileView.as_view(), name='user_profile'),
 ]

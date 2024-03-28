@@ -19,7 +19,6 @@ from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-# from rest_framework_simplejwt.views import TokenRefreshView
 
 from freelance_exchange import settings
 from users.views import *
@@ -41,19 +40,11 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    # path('signup/', signup, name='signup'),
-    # path('signin/', signin, name='signin'),
-    # path('refresh/', get_access_token, name='refresh'),
-    # path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    # path('testlogin/', )
     path('accounts/', include('django.contrib.auth.urls')),
 
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('docs/terms_of_service/', terms_of_service),
-    path('', home_view),
-    # path('api-token-auth/', views.obtain_auth_token),
     path('admin/', admin.site.urls),
-    path('profile/<slug:slug_name>/', profile),
+    #path('profile/<slug:slug_name>/', profile),
     # --- USERS ---
     path('api/users/', include('users.urls')),
     # --- ADS ---
