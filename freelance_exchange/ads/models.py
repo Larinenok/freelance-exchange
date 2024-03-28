@@ -16,8 +16,10 @@ class Ad(models.Model):
     pub_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     contact_info = models.CharField(max_length=200, verbose_name='Контактная информация')
     files = models.ManyToManyField('AdFile', related_name='ads', verbose_name='Файлы', blank=True)
+    closed_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата закрытия')
     # В КОДЕ НЕ ИСПОЛЬЗУЕТСЯ ¯\_(ツ)_/¯ НО МАЛО ЛИ
     responders = models.ManyToManyField(CustomUser, through='AdResponse', related_name='ads_responded', verbose_name='Откликнувшиеся')
+
     # Статус объявления
     OPEN = 'open'
     CLOSED = 'closed'
@@ -29,7 +31,6 @@ class Ad(models.Model):
         (IN_PROGRESS, 'Выполняется'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=OPEN, verbose_name='Статус')
-    closed_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата закрытия')
 
     class Meta:
         verbose_name = 'Объявление'

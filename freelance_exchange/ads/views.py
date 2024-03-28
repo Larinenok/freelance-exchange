@@ -23,9 +23,9 @@ def all_ads(request):
     }
     return render(request, 'all_ads.html', context)
 
-
 def ad_data(ad: Ad) -> dict:
     executor_name = ad.executor.slug if ad.executor else 'None'
+    response_count = AdResponse.objects.filter(ad=ad).count()
 
     files_query = [file.file.name for file in ad.files.all()] if ad.files.exists() else ['None']
 
@@ -34,6 +34,7 @@ def ad_data(ad: Ad) -> dict:
         'author firstname': ad.author.first_name,
         'author lastname': ad.author.last_name,
         'executor': executor_name,
+        'response_count': response_count,
         'title': ad.title,
         'id': ad.id,
         'slug': ad.slug,
@@ -87,7 +88,10 @@ def ad_view(request, id, slug):
     openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad', required=True),
     openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad', required=True),
     openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad', required=True),
-    openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Type of the Ad', required=True),
+    openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Type of the Ad', required=True, enum=[
+        'контрольная работа', 'курсовая работа', 'дипломная работа', 'задача', 'лабораторная работа', 'тест', 'эссе',
+        'практика', 'чертеж', 'перевод', 'диссертация', 'бизнез-план', 'билеты', 'статья', 'доклад', 'шпаргалка', 'творческая работа'
+    ]),
     openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad', required=True),
     openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad', required=True),
     openapi.Parameter('files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, description='Files to upload with the Ad'),
@@ -216,8 +220,37 @@ def my_ads(request):
     return Response({'ads': profiles}, status=status.HTTP_201_CREATED)
 
 
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def my_closed_ads(request):
+    profiles = []
+    user = check_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=401)
+
+    ads = Ad.objects.filter(executor=user, status='closed')
+    for ad in ads:
+        profiles.append(ad_data(ad))
+    return Response({'ads': profiles}, status=status.HTTP_201_CREATED)
+
+
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def ads_im_completing(request):
+    profiles = []
+    user = check_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=401)
+
+    ads = Ad.objects.filter(executor=user)
+    for ad in ads:
+        profiles.append(ad_data(ad))
+    return Response({'ads': profiles}, status=status.HTTP_201_CREATED)
+
+
 @swagger_auto_schema(method='post', manual_parameters=[
     openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+    openapi.Parameter('reason', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Reason of close the ad', required=False),
 ])
 @api_view(['POST'])
 def close_ad(request):
@@ -225,6 +258,8 @@ def close_ad(request):
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
     ad_id = request.query_params.get('ad_id')
+    # Пока хз где использовать
+    reason = request.query_params.get('reason')
 
     if not ad_id:
         return Response({'error': 'Ad ID is required'}, status=400)
@@ -236,8 +271,6 @@ def close_ad(request):
     ad.status = Ad.CLOSED
     ad.closed_date = timezone.now()
     ad.save()
-
-    return Response({'message': 'Ad closed successfully'})
 
 
 @swagger_auto_schema(method='delete', manual_parameters=[

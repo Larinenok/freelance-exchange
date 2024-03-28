@@ -11,7 +11,7 @@ from .models import *
 class AdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
-        fields = ('id', 'author', 'title', 'description', 'category', 'budget', 'pub_date', 'contact_info')
+        fields = ('id', 'author', 'title', 'description', 'category', 'type', 'budget', 'pub_date', 'contact_info')
         def create(self, validated_data):
             ad = Ad.objects.create(
                 author=validated_data['author'],
@@ -20,6 +20,7 @@ class AdSerializer(serializers.ModelSerializer):
                 slug=slugify(validated_data['username']),
                 description=validated_data['description'],
                 category=validated_data['category'],
+                type=validated_data['type'],
                 budget=validated_data['budget'],
                 contact_info=validated_data['contact_info'],
             )

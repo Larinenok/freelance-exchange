@@ -19,4 +19,6 @@ urlpatterns = [
     path('file_delete/', delete_file_from_ad),
     path('close/', close_ad),
     path('my_orders/', my_ads),
+    path('orders_completed_by_me', my_closed_ads),
+    path('orders_im_completing', ads_im_completing)
 ]
