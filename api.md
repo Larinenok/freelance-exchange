@@ -47,18 +47,18 @@
 - [x] files
 
 ## Completed work
-- [ ] work data
+- [x] work data
 
 ## blacklist
 - [ ] FIO
 - [ ] delete from list
   
 ## My tasks
-- [ ] work data (name, categories, who (input), date (start, end), status)
+- [x] work data (name, categories, who (input), date (start, end), status)
 
 ### function
-- [ ] set executor
-- [ ] get responders
+- [x] set executor
+- [x] get responders
 - [ ] close task (description, stars)
 
 ## My works
