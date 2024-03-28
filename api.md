@@ -9,7 +9,10 @@
 ## Login
 - [x] email
 - [x] password
-- [ ] forget password
+- [x] forget password
+
+## Forget password
+- [ ] completed
 
 ## Profile
 - [x] FIO
@@ -17,12 +20,11 @@
 - [x] email
 - [x] stars (рейтинг)
 - [x] birthdate
-- [ ] number phone
-- [ ] place of work/study
+- [x] number phone
+- [x] place of work/study
 - [ ] skills
 - [x] description
 - [ ] examples of works
-- [ ] count of works
 
 ### function
 - [ ] edit profile

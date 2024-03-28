@@ -14,7 +14,8 @@ class CustomUserAdmin(admin.ModelAdmin):
     fieldsets = (('Main Fields',
         {'fields': (
             'first_name', 'last_name', 'username', 'slug', 'email', 'photo',
-            'description', 'language', 'views', 'stars_freelancer', 'stars_customer',)}),)
+            'description', 'language', 'views', 'stars_freelancer', 'stars_customer',
+            'phone_number', 'place_of_work', 'skills')}),)
     prepopulated_fields = {'slug': ('username',)}
 
 

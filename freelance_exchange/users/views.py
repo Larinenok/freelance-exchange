@@ -1,3 +1,4 @@
+from django.db.models.functions import SHA256
 from django.shortcuts import render, get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -14,6 +15,7 @@ from drf_yasg import openapi
 from pytils.translit import slugify
 
 from datetime import datetime
+import re
 
 
 def check_token(request):
@@ -53,7 +55,11 @@ def user_data(user) -> dict:
         'description': user.description,
         'language': user.language,
         # 'views': user.views,
-        'stars': StarsJson.parse(user.stars_freelancer)
+        'stars': StarsJson.parse(user.stars_freelancer),
+        'phone_number': user.phone_number,
+        'place_of_work': user.place_of_work,
+        'skills': user.skills,
+        # 'works': user.works,
     }
 
 
@@ -75,8 +81,11 @@ def user_data(user) -> dict:
             'description': openapi.Schema(type=openapi.TYPE_STRING, title='description'),
             'language': openapi.Schema(type=openapi.TYPE_STRING, title='language', enum=settings.LANGUAGES),
             'birth_date': openapi.Schema(type=openapi.TYPE_STRING, title='birth date', format='DD.MM.YYYY'),
+            'phone_number': openapi.Schema(type=openapi.TYPE_STRING, title='phone number', pattern=r'^((\+7|7|8)+([0-9]){10})$'),
+            'place_of_work': openapi.Schema(type=openapi.TYPE_STRING, title='place of work/study'),
+            # 'skills': openapi.Schema(type=openapi.TYPE_ARRAY, title='skills'),
         },
-        required=['first_name', 'last_name', 'username', 'password', 'password2', 'email']
+        required=['first_name', 'last_name', 'username', 'password', 'password2',]
     ),
     responses=token_responses
 )
@@ -90,22 +99,45 @@ def signup(request):
 
     serializer = RegisterSerializer(data=data)
     if serializer.is_valid():
-        if not CustomUser.objects.filter(username=data['email']).exists():
-            try:
-                birth = datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d')
-            except:
-                birth = None
+        try:
+            birth = datetime.strptime(data['birth_date'], '%d.%m.%Y').strftime('%Y-%m-%d')
+        except:
+            birth = None
 
-            try:
-                user = CustomUser.objects.create(first_name=data['first_name'], last_name=data['last_name'], username=data['username'], slug=slugify(data['username']), email=data['email'], password=data['password'], photo=request.FILES.get('photo', 'default/default.jpg'), birth_date=birth)
-                user.set_password(user.password)
-                user.save()
-                refresh = RefreshToken.for_user(user)
-                return Response({'refresh' : str(refresh), 'access': str(refresh.access_token), 'user': user_data(user)}, status=status.HTTP_201_CREATED)
-            except:
-                return Response({'message':'Login Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'message':'User Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            pn = re.fullmatch(r'^((\+7|7|8)+([0-9]){10})$', data['phone_number'])
+            if pn:
+                pn = pn[0]
+        except:
+            pn = None
+
+        data['birth_date'] = birth
+        data['phone_number'] = pn
+
+        # try:
+            # user = CustomUser.objects.create(first_name=data['first_name'],
+            #                                  last_name=data['last_name'],
+            #                                  username=data['username'],
+            #                                  slug=slugify(data['username']),
+            #                                  email=data['email'],
+            #                                  password=data['password'],
+            #                                  description=data['description'],
+            #                                  language=data['language'],
+            #                                  # skills=data['skills'],
+            #                                  photo=request.FILES.get('photo', 'default/default.jpg'),
+            #                                  birth_date=birth,
+            #                                  phone_number=pn,
+            #                                  place_of_work=data['place_of_work'])
+            # user.set_password(user.password)
+            # user.save()
+        user = serializer.create(data)
+        refresh = RefreshToken.for_user(user)
+        return Response({'refresh' : str(refresh),
+                         'access': str(refresh.access_token),
+                         'user': user_data(user)},
+                         status=status.HTTP_201_CREATED)
+        # except:
+        #     return Response({'message':'Create error'}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -209,6 +241,62 @@ def get_me(request):
         return Response({'error': 'Non authorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     return Response({'user': user_data(user)}, status=status.HTTP_200_OK)
+
+
+@swagger_auto_schema(method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'email': openapi.Schema(type=openapi.TYPE_STRING, title='send new password'),
+}))
+@api_view(['POST'])
+def forget_password(request):
+    try:
+        data = request.data
+    except:
+        data = request.query_params
+
+    email = data.get('email')
+
+    if CustomUser.objects.filter(email=email).exists():
+        ### --- send new password to email ---
+        pass
+    else:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({'status': 'Ok'}, status=status.HTTP_200_OK)
+
+
+@swagger_auto_schema(method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'first_name': openapi.Schema(type=openapi.TYPE_STRING, title='first name'),
+            'last_name': openapi.Schema(type=openapi.TYPE_STRING, title='last name'),
+            'id': openapi.Schema(type=openapi.TYPE_STRING, title='id'),
+            'username': openapi.Schema(type=openapi.TYPE_STRING, title='username'),
+}))
+@api_view(['POST'])
+def telegram_login(request):
+    try:
+        data = request.data
+    except:
+        data = request.query_params
+
+    if (data.get('username') == ''):
+        return Response({'error': 'username empty'}, status=status.HTTP_404_NOT_FOUND)
+
+    print(request)
+
+    data['password'] = SHA256(data.get('id'))
+    data['password2'] = SHA256(data.get('id'))
+    request.data = data
+
+
+    if (CustomUser.objects.filter(username=data.get('username')).exists()):
+        return signin(request)
+    else:
+        return signup(request)
 
 
 def home_view(request):

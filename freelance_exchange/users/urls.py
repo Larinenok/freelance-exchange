@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import signin, signup, get_users, get_access_token, get_me
+from .views import forget_password, signin, signup, get_users, get_access_token, get_me, telegram_login
 
 
 urlpatterns = [
@@ -12,4 +12,6 @@ urlpatterns = [
     path('refresh/', get_access_token, name='refresh_token'),
     path('', get_users, name='list_user'),
     path('me/', get_me, name='user'),
+    path('forget/', forget_password, name='forget_password'),
+    path('telegram_login/', telegram_login, name='telegram_login')
 ]
