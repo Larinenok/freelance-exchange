@@ -108,13 +108,13 @@
 - [x] price
 - [x] date start
 - [x] date end
-- [ ] count responses
+- [x] count responses
 - [x] description
 
 ### function
 - [x] send response
 - [x] edit task
-- [ ] add file
+- [x] add file
 
 ## Services
 - [ ] service
