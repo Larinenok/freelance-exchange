@@ -32,6 +32,8 @@ class AdResponseAdmin(admin.ModelAdmin):
     list_display = ('ad', 'id', 'responder', 'response_comment')
     pass
 
+
+
 admin.site.register(Ad, AdAdmin)
 admin.site.register(AdFile, AdFileAdmin)
 admin.site.register(AdResponse, AdResponseAdmin)

@@ -1,76 +1,154 @@
-from django.conf import settings
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
-from pytils.translit import slugify
-
 from .models import *
 
+from django.contrib.auth import get_user_model, authenticate
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super(MyTokenObtainPairSerializer, cls).get_token(user)
-
-        # Add custom claims
-        token['username'] = user.username
-
-        return token
+User = get_user_model()
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
-        required=True,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
-    )
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
+class ListUserInfo(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    skills = serializers.StringRelatedField(many=True)
+    birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y',])
 
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'username', 'password', 'password2', 'email', 'photo', 'description', 'language', 'birth_date')
-        extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True},
-            'photo': {'required': False},
-            'description': {'required': False},
-            'language': {'required': False},
-            'birth_date': {'required': False},
-        }
+        fields = (
+            'id',
+            'username',
+            'slug',
+            'first_name',
+            'last_name',
+            'patronymic',
+            'email',
+            'phone',
+            'place_study_work',
+            'skills',
+            'birth_date',
+            'description',
+            'language',
+            'photo',
+            'views',
+            'stars_freelancer',
+            'stars_customer',
+        )
 
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
 
-        return attrs
+class CustomUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            'username',
+            'email'
+        )
+
+
+class DetailUserProfile(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    skills = serializers.StringRelatedField(many=True)
+    birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            'username',
+            'slug',
+            'first_name',
+            'last_name',
+            'patronymic',
+            'email',
+            'phone',
+            'place_study_work',
+            'skills',
+            'birth_date',
+            'description',
+            'language',
+            'photo',
+            'views',
+            'stars_freelancer',
+            'stars_customer'
+        )
+
+
+class UserPutSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            'first_name',
+            'last_name',
+            'patronymic',
+            'email',
+            'skills',
+            'birth_date',
+            'place_study_work',
+            'description',
+            'phone',
+            'photo'
+        )
+
+
+class PhotoPatch(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = (
+            'photo',
+        )
+
+
+class UserLoginSerializer(serializers.Serializer):
+    login_or_email = serializers.CharField(label="Логин или Email")
+    password = serializers.CharField(style={'input_type': 'password'})
+
+    def validate(self, data):
+        login_or_email = data.get('login_or_email')
+        password = data.get('password')
+
+        if login_or_email and password:
+            user = User.objects.filter(username=login_or_email).first() or User.objects.filter(
+                email=login_or_email).first()
+
+            if user is None:
+                raise serializers.ValidationError("Невозможно аутентифицировать с данными логином/почтой.")
+
+            user = authenticate(username=user.username, password=password)
+            if not user:
+                raise serializers.ValidationError("Неверный пароль.")
+        else:
+            raise serializers.ValidationError("Должны быть указаны 'login_or_email' и 'password'.")
+
+        return user
+
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    password_confirm = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password_confirm']
+
+    def validate(self, data):
+        if data['password'] != data['password_confirm']:
+            raise serializers.ValidationError({"password": "Пароли не совпадают."})
+        return data
 
     def create(self, validated_data):
-        description = ''
-        language = settings.LANGUAGE_CODE
-        photo = 'default/default.jpg'
-
-        if ('description' in validated_data.keys()):
-            description = validated_data['description']
-
-        if ('language' in validated_data.keys()):
-            language=validated_data['language'],
-
-        if ('photo' in validated_data.keys()):
-            photo=validated_data['photo'],
-
-        user = CustomUser.objects.create(
+        validated_data.pop('password_confirm', None)
+        user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
-            slug=slugify(validated_data['username']),
-            description=description,
-            language=language,
-            photo=photo,
+            password=validated_data['password']
         )
-
-        user.set_password(validated_data['password'])
-        user.save()
-
         return user
+
+
+
