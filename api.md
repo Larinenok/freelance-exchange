@@ -39,12 +39,12 @@
 
 ## Task
 - [x] theme
-- [ ] type
+- [x] type
 - [x] category
 - [x] date start
-- [ ] data end
-- [ ] status
-- [ ] files
+- [x] data end
+- [x] status
+- [x] files
 
 ## Completed work
 - [ ] work data
@@ -84,30 +84,30 @@
 
 ## Create task
 - [x] theme
-- [ ] type
+- [x] type
 - [x] category
 - [x] date start
-- [ ] date end
+- [x] date end
 - [x] price
 - [x] description
-- [ ] files
+- [x] files
 
 ### function
-- [ ] add file
+- [x] add file
 
 ## Task view
 - [x] theme
-- [ ] FIO
+- [x] FIO
 - [x] nickname
 - [ ] last online
 - [ ] count of viewers
-- [ ] status
+- [x] status
 - [x] id
-- [ ] type
+- [x] type
 - [x] category
 - [x] price
 - [x] date start
-- [ ] date end
+- [x] date end
 - [ ] count responses
 - [x] description
 
