@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from .serializers import ListUserInfo, DetailUserProfile, UserPutSerializer, PhotoPatch, UserLoginSerializer, \
-    UserRegistrationSerializer, CustomUserSerializer
+    UserRegistrationSerializer, CustomUserSerializer, SkillsSerializer
 from rest_framework import generics, status, permissions
 from .models import *
 #from ads.models import *
@@ -84,3 +84,9 @@ class UserProfileView(RetrieveAPIView):
     def get_object(self):
         slug = self.kwargs.get("slug")
         return get_object_or_404(CustomUser, slug=slug)
+
+
+class SkillChangeView(ListAPIView):
+    permission_classes = [AllowAny, ]
+    queryset = Skills.objects.all()
+    serializer_class = SkillsSerializer
