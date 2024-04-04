@@ -11,11 +11,26 @@ class Ad(models.Model):
     slug = models.SlugField(max_length=210, unique=False, null=True)
     description = models.TextField(max_length=1000, verbose_name='Описание')
     category = models.CharField(max_length=100, verbose_name='Категория')
+    type = models.CharField(max_length=100, verbose_name='Вид', blank=True, null=True)
     budget = models.IntegerField(verbose_name='Бюджет')
     pub_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     contact_info = models.CharField(max_length=200, verbose_name='Контактная информация')
+    files = models.ManyToManyField('AdFile', related_name='ads', verbose_name='Файлы', blank=True)
+    closed_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата закрытия')
     # В КОДЕ НЕ ИСПОЛЬЗУЕТСЯ ¯\_(ツ)_/¯ НО МАЛО ЛИ
     responders = models.ManyToManyField(CustomUser, through='AdResponse', related_name='ads_responded', verbose_name='Откликнувшиеся')
+
+    # Статус объявления
+    OPEN = 'open'
+    CLOSED = 'closed'
+    IN_PROGRESS = 'in_progress'
+
+    STATUS_CHOICES = [
+        (OPEN, 'Открытое'),
+        (CLOSED, 'Закрытое'),
+        (IN_PROGRESS, 'Выполняется'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=OPEN, verbose_name='Статус')
 
     class Meta:
         verbose_name = 'Объявление'
@@ -38,12 +53,13 @@ class AdResponse(models.Model):
         return self.responder.username
 
 class AdFile(models.Model):
-    ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')
+    # ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')
     file = models.FileField(upload_to='files', verbose_name='Файл')
+    id = models.AutoField(primary_key=True)
 
     class Meta:
         verbose_name = 'Файлы из объявлений'
         verbose_name_plural = 'Файлы из объявлений'
 
     def __str__(self):
-        return os.path.basename(self.file.name)
+        return self.file.name

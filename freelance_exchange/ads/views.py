@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from .serializers import AdSerializer, AdFileSerializer
 from rest_framework import generics, status
@@ -10,6 +10,7 @@ from .models import *
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
+from django.utils import timezone
 
 
 def all_ads(request):
@@ -22,30 +23,29 @@ def all_ads(request):
     }
     return render(request, 'all_ads.html', context)
 
-def ad_data(ad) -> dict:
-    if not ad.executor:
-        executor_name = 'None'
-    else:
-        executor_name = ad.executor.slug
+def ad_data(ad: Ad) -> dict:
+    executor_name = ad.executor.slug if ad.executor else 'None'
+    response_count = AdResponse.objects.filter(ad=ad).count()
 
-    files = AdFile.objects.filter(ad=ad)
-    files_query = []
-    if not files:
-        files_query.append('None')
-    else:
-        for file in files:
-            files_query.append(file.file.name)
+    files_query = [({'name': file.file.name, 'file_id': file.id}) for file in ad.files.all()] if ad.files.exists() else ['None']
+
     return {
         'author': ad.author.slug,
+        'author firstname': ad.author.first_name,
+        'author lastname': ad.author.last_name,
         'executor': executor_name,
+        'response_count': response_count,
         'title': ad.title,
         'id': ad.id,
         'slug': ad.slug,
         'description': ad.description,
         'category': ad.category,
+        'type': ad.type,
         'budget': ad.budget,
         'pub_date': ad.pub_date,
+        'close_date': ad.closed_date,
         'contact_info': ad.contact_info,
+        'status': ad.status,
         'files': files_query,
     }
 
@@ -85,20 +85,19 @@ def ad_view(request, id, slug):
 # ----------- ads ----------- #
 #                             #
 @swagger_auto_schema(method='post', manual_parameters=[
-    openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad',
-                      required=True),
-    openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad',
-                      required=True),
-    openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad',
-                      required=True),
-    openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad',
-                      required=True),
-    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                      description='Contact information for the Ad', required=True),
-    openapi.Parameter('file', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad', required=True),
+    openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad', required=True),
+    openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad', required=True),
+    openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad', required=True),
+    openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Type of the Ad', required=True, enum=[
+        'контрольная работа', 'курсовая работа', 'дипломная работа', 'задача', 'лабораторная работа', 'тест', 'эссе',
+        'практика', 'чертеж', 'перевод', 'диссертация', 'бизнез-план', 'билеты', 'статья', 'доклад', 'шпаргалка', 'творческая работа'
+    ]),
+    openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad', required=True),
+    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad', required=True),
+    openapi.Parameter('files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, description='Files to upload with the Ad'),
 ])
-## ТУТ НАДО ДОДЕЛАТЬ ЧТОБЫ ФАЙЛ НОРМАЛЬНО ЗАГРУЖАЛСЯ А ТО ОН ПОЧЕМУ ТО НЕ ЗАГРУЖАЕТСЯ Я НЕ ПОНИМАЮ ПОЧЕМУ
 @api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
 def create_ad(request):
     #author = check_token(request)
     if not author:
@@ -109,32 +108,169 @@ def create_ad(request):
         description = request.query_params.get('description')
         budget = request.query_params.get('budget')
         category = request.query_params.get('category')
+        type = request.query_params.get('type')
         contact_info = request.query_params.get('contact_info')
-        file = request.query_params.get('file')
+        files = request.FILES.getlist('files')
     except:
         title = request.data.get('title')
         description = request.data.get('description')
         budget = request.data.get('budget')
         category = request.data.get('category')
+        type = request.data.get('type')
         contact_info = request.data.get('contact_info')
-        file = request.query_params.get('file')
+        files = request.FILES.getlist('files')
+
     ad = Ad.objects.create(
         author=author,
         title=title,
         slug=slugify(title),
         description=description,
         category=category,
+        type=type,
         budget=budget,
         contact_info=contact_info,
     )
-    file = AdFile.objects.create(
-        ad=ad,
-        file=file,
-    )
-    print(file.file.name)
-    file.save()
-    ad.save()
+
+    for file in files:
+        file_object = AdFile.objects.create(file=file)
+        ad.files.add(file_object)
+
     return Response({'message': 'Ad created successfully'})
+
+
+@swagger_auto_schema(method='post', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+    openapi.Parameter('file', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, description='File to upload', required=True),
+])
+@api_view(['POST'])
+@parser_classes([MultiPartParser])
+def add_file_to_ad(request):
+    user = check_token(request)
+    if not user:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+
+    ad_id = request.query_params.get('ad_id')
+    file = request.FILES.get('file')
+
+    ad = get_object_or_404(Ad, id=ad_id)
+    if ad.author != user and not request.user.is_superuser:
+        return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    file_object = AdFile.objects.create(file=file)
+    ad.files.add(file_object)
+
+    return Response({'message': 'File added successfully'})
+
+
+@swagger_auto_schema(method='get', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+])
+@api_view(['GET'])
+def list_files_for_ad(request):
+    ad_id = request.query_params.get('ad_id')
+
+    if not ad_id:
+        return Response({'error': 'Ad ID is required'}, status=400)
+
+    ad = get_object_or_404(Ad, id=ad_id)
+    files = ad.files.all()
+
+    files_info = [{'id': file.id, 'name': file.file.name} for file in files]
+
+    return Response({'files': files_info})
+
+
+@swagger_auto_schema(method='delete', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+    openapi.Parameter('file_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the File to delete', required=True),
+])
+@api_view(['DELETE'])
+def delete_file_from_ad(request):
+    user = check_token(request)
+    if not user:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+    ad_id = request.query_params.get('ad_id')
+    file_id = request.query_params.get('file_id')
+
+    if not ad_id or not file_id:
+        return Response({'error': 'Ad ID and File ID are required'}, status=400)
+
+    ad = get_object_or_404(Ad, id=ad_id)
+    if ad.author != user and not request.user.is_superuser:
+        return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    file_object = get_object_or_404(AdFile, id=file_id)
+    ad.files.remove(file_object)
+
+    return Response({'message': 'File removed successfully'})
+
+
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def my_ads(request):
+    profiles = []
+    user = check_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=401)
+
+    ads = Ad.objects.filter(author=user)
+    for ad in ads:
+        profiles.append(ad_data(ad))
+
+    return Response({'ads': profiles}, status=status.HTTP_201_CREATED)
+
+
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def my_closed_ads(request):
+    profiles = []
+    user = check_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=401)
+
+    ads = Ad.objects.filter(executor=user, status='closed')
+    for ad in ads:
+        profiles.append(ad_data(ad))
+    return Response({'ads': profiles}, status=status.HTTP_201_CREATED)
+
+
+@swagger_auto_schema(method='get')
+@api_view(['GET'])
+def ads_im_completing(request):
+    profiles = []
+    user = check_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=401)
+
+    ads = Ad.objects.filter(executor=user)
+    for ad in ads:
+        profiles.append(ad_data(ad))
+    return Response({'ads': profiles}, status=status.HTTP_201_CREATED)
+
+
+@swagger_auto_schema(method='post', manual_parameters=[
+    openapi.Parameter('ad_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
+    openapi.Parameter('reason', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Reason of close the ad', required=False),
+])
+@api_view(['POST'])
+def close_ad(request):
+    user = check_token(request)
+    if not user:
+        return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
+    ad_id = request.query_params.get('ad_id')
+    # Пока хз где использовать
+    reason = request.query_params.get('reason')
+
+    if not ad_id:
+        return Response({'error': 'Ad ID is required'}, status=400)
+
+    ad = get_object_or_404(Ad, id=ad_id)
+    if ad.author != user and not request.user.is_superuser:
+        return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    ad.status = Ad.CLOSED
+    ad.closed_date = timezone.now()
+    ad.save()
 
 
 @swagger_auto_schema(method='delete', manual_parameters=[
@@ -170,6 +306,8 @@ def response_ad(request):
     comment = request.query_params.get('comment')
     try:
         ad = Ad.objects.get(id=id)
+        if ad.status != Ad.OPEN:
+            return Response({'error': 'This AD is not open'}, status=status.HTTP_400_BAD_REQUEST)
         ad_response = AdResponse.objects.create(
             ad=ad,
             responder=user,
@@ -228,6 +366,7 @@ def set_executor(request):
             return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
         if response.ad == ad:
             ad.executor = response.responder
+            ad.status = Ad.IN_PROGRESS
             ad.save()
             return Response({'Executor set successfully'}, status=status.HTTP_201_CREATED)
         else:
@@ -243,10 +382,9 @@ def set_executor(request):
     openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Title of the Ad'),
     openapi.Parameter('description', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Description of the Ad'),
     openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Category of the Ad'),
+    openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Type of the Ad'),
     openapi.Parameter('budget', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Budget of the Ad'),
-    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                      description='Contact information for the Ad'),
-    openapi.Parameter('files', openapi.IN_QUERY, type=openapi.TYPE_FILE, description='Files of the Ad'),
+    openapi.Parameter('contact_info', openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Contact information for the Ad'),
 ])
 @api_view(['PUT'])
 def edit_ad(request):
@@ -263,12 +401,14 @@ def edit_ad(request):
             title = request.query_params.get('title', ad.title)
             description = request.query_params.get('description', ad.description)
             category = request.query_params.get('category', ad.category)
+            type = request.query_params.get('type', ad.type)
             budget = request.query_params.get('budget', ad.budget)
             contact_info = request.query_params.get('contact_info', ad.contact_info)
         except:
             title = request.data.get('title', ad.title)
             description = request.data.get('description', ad.description)
             category = request.data.get('category', ad.category)
+            type = request.data.get('type', ad.type)
             budget = request.data.get('budget', ad.budget)
             contact_info = request.data.get('contact_info', ad.contact_info)
 
@@ -277,6 +417,7 @@ def edit_ad(request):
         ad.slug = slugify(title)
         ad.description = description
         ad.category = category
+        ad.type = type
         ad.budget = budget
         ad.contact_info = contact_info
         ad.save()
