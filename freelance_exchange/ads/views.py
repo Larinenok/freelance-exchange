@@ -6,7 +6,6 @@ from rest_framework.response import Response
 from .serializers import AdSerializer, AdFileSerializer
 from rest_framework import generics, status
 from .models import *
-#from users.views import check_token
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from pytils.translit import slugify
@@ -99,7 +98,7 @@ def ad_view(request, id, slug):
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
 def create_ad(request):
-    #author = check_token(request)
+    author = request.user
     if not author:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -145,7 +144,7 @@ def create_ad(request):
 @api_view(['POST'])
 @parser_classes([MultiPartParser])
 def add_file_to_ad(request):
-    user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -186,7 +185,7 @@ def list_files_for_ad(request):
 ])
 @api_view(['DELETE'])
 def delete_file_from_ad(request):
-    user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
     ad_id = request.query_params.get('ad_id')
@@ -209,7 +208,7 @@ def delete_file_from_ad(request):
 @api_view(['GET'])
 def my_ads(request):
     profiles = []
-    user = check_token(request)
+    user = request.user
     if not user:
         return Response({'error': 'Unauthorized'}, status=401)
 
@@ -224,7 +223,7 @@ def my_ads(request):
 @api_view(['GET'])
 def my_closed_ads(request):
     profiles = []
-    user = check_token(request)
+    user = request.user
     if not user:
         return Response({'error': 'Unauthorized'}, status=401)
 
@@ -238,7 +237,7 @@ def my_closed_ads(request):
 @api_view(['GET'])
 def ads_im_completing(request):
     profiles = []
-    user = check_token(request)
+    user = request.user
     if not user:
         return Response({'error': 'Unauthorized'}, status=401)
 
@@ -254,7 +253,7 @@ def ads_im_completing(request):
 ])
 @api_view(['POST'])
 def close_ad(request):
-    user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
     ad_id = request.query_params.get('ad_id')
@@ -277,7 +276,7 @@ def close_ad(request):
     openapi.Parameter('id', openapi.IN_QUERY, description='ID of the Ad', type=openapi.TYPE_INTEGER)])
 @api_view(['DELETE'])
 def delete_ad(request):
-    #user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -298,7 +297,7 @@ def delete_ad(request):
 ])
 @api_view(['POST'])
 def response_ad(request):
-    #user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -325,7 +324,7 @@ def response_ad(request):
 @api_view(['get'])
 def get_responses(request):
     responses = []
-    #user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -353,7 +352,7 @@ def get_responses(request):
 ])
 @api_view(['post'])
 def set_executor(request):
-    #user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -388,7 +387,7 @@ def set_executor(request):
 ])
 @api_view(['PUT'])
 def edit_ad(request):
-    #user = check_token(request)
+    user = request.user
     if not user:
         return Response('Non authorized', status=status.HTTP_401_UNAUTHORIZED)
 
