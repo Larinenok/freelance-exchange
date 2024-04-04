@@ -34,7 +34,7 @@ class CustomUser(AbstractUser):
     patronymic = models.CharField(max_length=50, null=True, blank=True, verbose_name='Отчество')
     phone = models.CharField(max_length=30, null=True, blank=True, verbose_name='Телефон')
     place_study_work = models.CharField(max_length=100, null=True, blank=True, verbose_name='Место работы, учебы')
-    slug = models.SlugField(max_length=15, unique=True, null=True, verbose_name='Slug')
+    slug = models.SlugField(max_length=15, unique=True, null=False, blank=False, verbose_name='Slug')
     birth_date = models.DateField(null=True, blank=True, verbose_name='Дата рождения')
     skills = models.ManyToManyField(Skills, verbose_name='Навыки')
     photo = models.ImageField(upload_to="photos/%Y/%m/%d/", default='default/default.jpg', blank=True, verbose_name='Аватар')
