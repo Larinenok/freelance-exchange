@@ -1,7 +1,5 @@
 *.pyc
 venv
 **/__pycache__/
-freelance_exchange/media
-freelance_exchange/db
-freelance_exchange/db.*
 .idea
+.env
