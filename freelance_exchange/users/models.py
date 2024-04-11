@@ -30,7 +30,7 @@ class CustomUser(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='Логин')
     first_name = models.CharField(max_length=150, blank=False, verbose_name='Имя')
     last_name = models.CharField(max_length=150, blank=False, verbose_name='Фамилия')
-    email = models.EmailField(blank=False, verbose_name='Почта')
+    email = models.EmailField(blank=True, verbose_name='Почта')
     patronymic = models.CharField(max_length=50, null=True, blank=True, verbose_name='Отчество')
     phone = models.CharField(max_length=30, null=True, blank=True, verbose_name='Телефон')
     place_study_work = models.CharField(max_length=100, null=True, blank=True, verbose_name='Место работы, учебы')

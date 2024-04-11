@@ -213,11 +213,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATIC_URL = 'https://um-stud.online/static/'
+STATIC_URL = '/static/'
+#STATIC_URL = 'https://um-stud.online/static/'
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = 'https://um-stud.online/media/'
+MEDIA_URL = '/media/'
+#MEDIA_URL = 'https://um-stud.online/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
