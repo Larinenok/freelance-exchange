@@ -31,8 +31,9 @@ class ListUserInfo(serializers.ModelSerializer):
             'language',
             'photo',
             'views',
-            'stars_freelancer',
-            'stars_customer',
+            'stars',
+            # 'stars_freelancer',
+            # 'stars_customer',
         )
 
 
@@ -69,8 +70,9 @@ class DetailUserProfile(serializers.ModelSerializer):
             'language',
             'photo',
             'views',
-            'stars_freelancer',
-            'stars_customer'
+            'stars',
+            # 'stars_freelancer',
+            # 'stars_customer',
         )
 
 

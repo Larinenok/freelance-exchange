@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.text import slugify
 
+from stars.models import Star
+
 
 class Ip(models.Model):
     ip = models.CharField(max_length=100)
@@ -41,8 +43,9 @@ class CustomUser(AbstractUser):
     description = models.TextField(default='', blank=True, verbose_name='Описание')
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name='Язык')
     views = models.ManyToManyField(Ip, blank=True, verbose_name='Просмотры профиля')
-    stars_freelancer = models.JSONField(default=dict, blank=True, null=True)
-    stars_customer = models.JSONField(default=dict, blank=True, null=True)
+    stars = models.ManyToManyField(Star, blank=True, verbose_name='Рейтинг')
+    # stars_freelancer = models.JSONField(default=dict, blank=True, null=True)
+    # stars_customer = models.JSONField(default=dict, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
