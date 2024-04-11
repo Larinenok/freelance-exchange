@@ -129,7 +129,7 @@ WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db'
+        'NAME': BASE_DIR / 'db'
     }
 }
 
