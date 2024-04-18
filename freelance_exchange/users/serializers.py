@@ -112,18 +112,23 @@ class UserLoginSerializer(serializers.Serializer):
         login_or_email = data.get('login_or_email')
         password = data.get('password')
 
-        if login_or_email and password:
-            user = User.objects.filter(username=login_or_email).first() or User.objects.filter(
-                email=login_or_email).first()
+        if not login_or_email or not password:
+            raise serializers.ValidationError({
+                'login_or_email': "Должен быть указан 'login_or_email'.",
+                'password': "Должен быть указан 'password'."
+            })
 
-            if user is None:
-                raise serializers.ValidationError("Невозможно аутентифицировать с данными логином/почтой.")
+        user = User.objects.filter(username=login_or_email).first() or User.objects.filter(email=login_or_email).first()
 
-            user = authenticate(username=user.username, password=password)
-            if not user:
-                raise serializers.ValidationError("Неверный пароль.")
-        else:
-            raise serializers.ValidationError("Должны быть указаны 'login_or_email' и 'password'.")
+        if user is None:
+            raise serializers.ValidationError({
+                'login_or_email': "Неверный логин или пароль"
+            })
+
+        if not authenticate(username=user.username, password=password):
+            raise serializers.ValidationError({
+                'password': "Неверный логин или пароль"
+            })
 
         return user
 
@@ -157,6 +162,25 @@ class SkillsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skills
         fields = "__all__"
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Пользователя с таким email не существует.")
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    confirm_password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "Пароли не совпадают."})
+        return data
 
 
 
