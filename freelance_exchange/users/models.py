@@ -43,9 +43,8 @@ class CustomUser(AbstractUser):
     description = models.TextField(default='', blank=True, verbose_name='Описание')
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name='Язык')
     views = models.ManyToManyField(Ip, blank=True, verbose_name='Просмотры профиля')
-    stars = models.ManyToManyField(Star, blank=True, verbose_name='Рейтинг')
-    # stars_freelancer = models.JSONField(default=dict, blank=True, null=True)
-    # stars_customer = models.JSONField(default=dict, blank=True, null=True)
+    # stars = models.ManyToManyField(Star, blank=True, verbose_name='Рейтинг')
+    stars = models.FloatField(null=True, blank=True, verbose_name='Рейтинг')
 
     def save(self, *args, **kwargs):
         if not self.slug:

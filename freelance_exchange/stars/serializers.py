@@ -10,12 +10,15 @@ class ListStarInfo(serializers.ModelSerializer):
         fields = ['count', 'username', 'author']
 
 
-class DeleteStarSerializer(serializers.ModelSerializer):
+class ChangeStarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Star
         fields = ['count', 'username']
 
     def validate(self, data):
+        if 0 > data['count'] or data['count'] > 5:
+            raise serializers.ValidationError({'count': 'Рейтинг должен быть от 0 до 5'})
+
         if self.context['request'].user.username == data['username']:
             raise serializers.ValidationError({"username": "Нельзя оставить отзыв самому себе"})
 

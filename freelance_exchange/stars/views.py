@@ -19,26 +19,32 @@ class APIStar(ListAPIView):
 
 class StarChangeAPIView(GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, ]
-    serializer_class = DeleteStarSerializer
+    serializer_class = ChangeStarSerializer
 
-    @swagger_auto_schema(request_body=DeleteStarSerializer)
+    @swagger_auto_schema(request_body=ChangeStarSerializer)
     def put(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             user = CustomUser.objects.get(username=request.data.get('username'))
-            user.stars.set(Star.objects.filter(username=request.data.get('username')).all())
+            stars = Star.objects.filter(username=request.data.get('username')).all()
+            rating = sum(star.count for star in stars)
+            if stars.count() > 0:
+                user.stars = rating / stars.count()
             user.save()
             return Response({'message': f'Отзыв об пользователе ({request.data.get("username")}) успешно оставлен'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @swagger_auto_schema(request_body=DeleteStarSerializer)
+    @swagger_auto_schema(request_body=ChangeStarSerializer)
     def delete(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.delete(request.data)
             user = CustomUser.objects.get(username=request.data.get('username'))
-            user.stars.set(Star.objects.filter(username=request.data.get('username')).all())
+            stars = Star.objects.filter(username=request.data.get('username')).all()
+            rating = sum(star.count for star in stars)
+            if stars.count() > 0:
+                user.stars = rating / stars.count()
             user.save()
             return Response({'message': f'Отзыв об пользователе ({request.data.get("username")}) успешно удален'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
