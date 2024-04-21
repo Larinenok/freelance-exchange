@@ -37,6 +37,15 @@ class ListUserInfo(serializers.ModelSerializer):
         )
 
 
+class SkillsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skills
+        fields = (
+            'id',
+            'name'
+        )
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
 
@@ -50,7 +59,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 class DetailUserProfile(serializers.ModelSerializer):
     email = serializers.EmailField()
-    skills = serializers.StringRelatedField(many=True)
+    skills = SkillsSerializer(many=True, read_only=True)
     birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
 
     class Meta:
