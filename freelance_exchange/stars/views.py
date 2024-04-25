@@ -33,7 +33,6 @@ class GetByUsernameAPIStar(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class StarChangeAPIView(GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, ]
     serializer_class = ChangeStarSerializer
