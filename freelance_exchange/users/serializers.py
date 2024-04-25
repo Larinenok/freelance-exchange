@@ -184,6 +184,3 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError({"confirm_password": "Пароли не совпадают."})
         return data
-
-
-
