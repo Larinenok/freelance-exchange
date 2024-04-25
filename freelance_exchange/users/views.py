@@ -1,3 +1,5 @@
+import uuid
+
 from decouple import config
 from django.contrib.auth.tokens import default_token_generator
 from django.http import Http404
@@ -13,11 +15,12 @@ from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, G
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from .serializers import ListUserInfo, DetailUserProfile, UserPutSerializer, PhotoPatch, UserLoginSerializer, \
     UserRegistrationSerializer, CustomUserSerializer, SkillsSerializer, PasswordResetRequestSerializer, \
-    PasswordResetConfirmSerializer
+    PasswordResetConfirmSerializer, TempUserRegistrationSerializer
 from rest_framework import generics, status, permissions, request
 from .models import *
 #from ads.models import *
@@ -87,46 +90,98 @@ class UserLoginAPIView(GenericAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+# class UserRegistrationAPIView(APIView):
+#     permission_classes = [AllowAny, ]
+#
+#     @swagger_auto_schema(request_body=UserRegistrationSerializer)
+#     def post(self, request):
+#         serializer = UserRegistrationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             user = serializer.save()
+#             self.send_verification_email(user, request)
+#             return Response({"message": "Пользователь успешно создан"}, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#     def send_verification_email(self, user, request):
+#         refresh = RefreshToken.for_user(user)
+#         token = str(refresh.access_token)
+#
+#         uid = urlsafe_base64_encode(force_bytes(user.pk))
+#
+#         link = reverse('activate_account', kwargs={'uidb64': uid, 'token': token})
+#         full_link = request.build_absolute_uri(link)
+#
+#         subject = "Подтверждение учетной записи"
+#         message = f"Пожалуйста, перейдите по следующей ссылке, чтобы активировать вашу учетную запись: {full_link}"
+#         send_mail(subject, message, config('EMAIL_HOST_USER'), [user.email])
+#
+#
+# class ActivateAccountView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         token = kwargs.get('token')
+#         try:
+#             token = AccessToken(token)
+#             user = User.objects.get(id=token['user_id'])
+#             if not user.is_approved:
+#                 user.is_approved = True
+#                 user.save()
+#                 return Response({"message": "Аккаунт активирован"}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"message": "Аккаунт уже активирован"}, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({"error": "Неверный токен"}, status=status.HTTP_404_NOT_FOUND)
+
 class UserRegistrationAPIView(APIView):
     permission_classes = [AllowAny, ]
 
-    @swagger_auto_schema(request_body=UserRegistrationSerializer)
+    @swagger_auto_schema(request_body=TempUserRegistrationSerializer)
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = TempUserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            self.send_verification_email(user, request)
+            temp_user = serializer.save()
+            self.send_verification_email(temp_user, request)
             return Response({"message": "Пользователь успешно создан"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def send_verification_email(self, user, request):
-        refresh = RefreshToken.for_user(user)
-        token = str(refresh.access_token)
-
+        token = RefreshToken.for_user(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        link = reverse('activate_account', kwargs={'uidb64': uid, 'token': token})
-        full_link = request.build_absolute_uri(link)
-
+        link = f'https://um-stud.ru/activate?uidb64={uid}&token={str(token.access_token)}'
+        full_link = link
         subject = "Подтверждение учетной записи"
         message = f"Пожалуйста, перейдите по следующей ссылке, чтобы активировать вашу учетную запись: {full_link}"
-        send_mail(subject, message, config('EMAIL_HOST_USER'), [user.email])
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email])
 
 
 class ActivateAccountView(APIView):
     def get(self, request, *args, **kwargs):
+        uidb64 = kwargs.get('uidb64')
         token = kwargs.get('token')
         try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            temp_user = TemporaryUserData.objects.get(pk=uid)
             token = AccessToken(token)
-            user = User.objects.get(id=token['user_id'])
-            if not user.is_approved:
-                user.is_approved = True
+
+            if not CustomUser.objects.filter(username=temp_user.username).exists():
+                user = CustomUser.objects.create(
+                    username=temp_user.username,
+                    email=temp_user.email,
+                    first_name=temp_user.first_name,
+                    last_name=temp_user.last_name,
+                    is_approved=True
+                )
+                user.set_password(temp_user.password)
                 user.save()
+
+                temp_user.delete()
                 return Response({"message": "Аккаунт активирован"}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Аккаунт уже активирован"}, status=status.HTTP_200_OK)
+
+        except TemporaryUserData.DoesNotExist:
+            return Response({"error": "Неверный токен или пользователь уже активирован"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": "Неверный токен"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PasswordResetRequestView(APIView):
@@ -140,8 +195,8 @@ class PasswordResetRequestView(APIView):
             user = User.objects.get(email=email)
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            link = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
-            full_link = request.build_absolute_uri(link)
+            link = f'https://um-stud.ru/auth/reset?uidb64={uid}&token={str(token.access_token)}'
+            full_link = link
             subject = "Сброс пароля"
             message = f"Пожалуйста, перейдите по ссылке, чтобы сбросить ваш пароль: {full_link}"
             send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email])
@@ -151,6 +206,7 @@ class PasswordResetRequestView(APIView):
 
 
 class PasswordResetConfirmView(APIView):
+    permission_classes = []
 
     @swagger_auto_schema(request_body=PasswordResetConfirmSerializer)
     def post(self, request, uidb64, token):

@@ -184,3 +184,24 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError({"confirm_password": "Пароли не совпадают."})
         return data
+
+
+class TempUserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    password_confirm = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    class Meta:
+        model = TemporaryUserData
+        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password_confirm']
+
+    def validate(self, data):
+        if data['password'] != data['password_confirm']:
+            raise serializers.ValidationError({"password": "Пароли не совпадают."})
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('password_confirm', None)
+        return TemporaryUserData.objects.create(**validated_data)
+
+
+

@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.utils.text import slugify
+from pytils.translit import slugify
+from django.utils.timezone import now
 
 from stars.models import Star
 
@@ -26,6 +27,22 @@ class Skills(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TemporaryUserData(models.Model):
+    username = models.CharField(max_length=15, unique=True)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    email = models.EmailField()
+    password = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Временное хранилище пользователей'
+        verbose_name_plural = 'Хранилище'
+
+    def __str__(self):
+        return self.username
 
 
 class CustomUser(AbstractUser):

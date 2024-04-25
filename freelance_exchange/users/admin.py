@@ -51,5 +51,17 @@ class SkillsAdmin(admin.ModelAdmin):
     list_display = ('name',)
 
 
+class TemporaryUserDataAdmin(admin.ModelAdmin):
+    model = TemporaryUserData
+    list_display = (
+        'username',
+        'first_name',
+        'last_name',
+        'email',
+        'created_at'
+    )
+
+
 admin.site.register(Skills, SkillsAdmin)
 admin.site.register(Ip)
+admin.site.register(TemporaryUserData, TemporaryUserDataAdmin)

@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'ads.apps.AdsConfig',
     'stars.apps.StarsConfig',
     'users.apps.UsersConfig',
-    'telegram_bot'
+    'telegram_bot',
+    'background_task'
 ]
 
 

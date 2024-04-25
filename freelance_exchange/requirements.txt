@@ -42,3 +42,5 @@ uritemplate==4.1.1
 urllib3==1.26.15
 uWSGI==2.0.21
 whitenoise==6.4.0
+telebot==0.0.5
+django-background-tasks==1.2.5
