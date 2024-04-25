@@ -9,6 +9,30 @@ class ListStarInfo(serializers.ModelSerializer):
         model = Star
         fields = ['count', 'username', 'author']
 
+    
+class GetStarInfo(serializers.ModelSerializer):
+    class Meta:
+        model = Star
+        fields = ['count', 'username']
+    
+    def validate(self, data):
+        if not CustomUser.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError({"username": "Такого пользователя не существует"})
+
+        return data
+
+
+class InputStarsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Star
+        fields = ['username']
+
+    def validate(self, data):
+        if not CustomUser.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError({"username": "Такого пользователя не существует"})
+
+        return data
+
 
 class ChangeStarSerializer(serializers.ModelSerializer):
     class Meta:
