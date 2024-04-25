@@ -167,12 +167,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
-class SkillsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Skills
-        fields = "__all__"
-
-
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 

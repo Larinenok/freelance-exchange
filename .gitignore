@@ -2,4 +2,4 @@
 venv
 **/__pycache__/
 .idea
-.env
+freelance_exchange/.env
