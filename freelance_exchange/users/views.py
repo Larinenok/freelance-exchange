@@ -11,16 +11,17 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError, AuthenticationFailed
-from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView, RetrieveAPIView, \
+    CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, UntypedToken
 from .serializers import ListUserInfo, DetailUserProfile, UserPutSerializer, PhotoPatch, UserLoginSerializer, \
     UserRegistrationSerializer, CustomUserSerializer, SkillsSerializer, PasswordResetRequestSerializer, \
-    PasswordResetConfirmSerializer, TempUserRegistrationSerializer
+    PasswordResetConfirmSerializer, TempUserRegistrationSerializer, ChangePasswordSerializer
 from rest_framework import generics, status, permissions, request
 from .models import *
 #from ads.models import *
@@ -90,46 +91,12 @@ class UserLoginAPIView(GenericAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-# class UserRegistrationAPIView(APIView):
-#     permission_classes = [AllowAny, ]
-#
-#     @swagger_auto_schema(request_body=UserRegistrationSerializer)
-#     def post(self, request):
-#         serializer = UserRegistrationSerializer(data=request.data)
-#         if serializer.is_valid():
-#             user = serializer.save()
-#             self.send_verification_email(user, request)
-#             return Response({"message": "Пользователь успешно создан"}, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#
-#     def send_verification_email(self, user, request):
-#         refresh = RefreshToken.for_user(user)
-#         token = str(refresh.access_token)
-#
-#         uid = urlsafe_base64_encode(force_bytes(user.pk))
-#
-#         link = reverse('activate_account', kwargs={'uidb64': uid, 'token': token})
-#         full_link = request.build_absolute_uri(link)
-#
-#         subject = "Подтверждение учетной записи"
-#         message = f"Пожалуйста, перейдите по следующей ссылке, чтобы активировать вашу учетную запись: {full_link}"
-#         send_mail(subject, message, config('EMAIL_HOST_USER'), [user.email])
-#
-#
-# class ActivateAccountView(APIView):
-#     def get(self, request, *args, **kwargs):
-#         token = kwargs.get('token')
-#         try:
-#             token = AccessToken(token)
-#             user = User.objects.get(id=token['user_id'])
-#             if not user.is_approved:
-#                 user.is_approved = True
-#                 user.save()
-#                 return Response({"message": "Аккаунт активирован"}, status=status.HTTP_200_OK)
-#             else:
-#                 return Response({"message": "Аккаунт уже активирован"}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             return Response({"error": "Неверный токен"}, status=status.HTTP_404_NOT_FOUND)
+def create_confirmation_token(user):
+    token = AccessToken.for_user(user)
+    token['username'] = user.username
+    token['is_confirmation_token'] = True
+    return str(token)
+
 
 class UserRegistrationAPIView(APIView):
     permission_classes = [AllowAny, ]
@@ -144,9 +111,9 @@ class UserRegistrationAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def send_verification_email(self, user, request):
-        token = RefreshToken.for_user(user)
+        token = create_confirmation_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        link = f'https://um-stud.ru/activate?uidb64={uid}&token={str(token.access_token)}'
+        link = f'https://um-stud.ru/activate?uidb64={uid}&token={token}'
         full_link = link
         subject = "Подтверждение учетной записи"
         message = f"Пожалуйста, перейдите по следующей ссылке, чтобы активировать вашу учетную запись: {full_link}"
@@ -154,13 +121,17 @@ class UserRegistrationAPIView(APIView):
 
 
 class ActivateAccountView(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         uidb64 = kwargs.get('uidb64')
         token = kwargs.get('token')
         try:
+            token = AccessToken(token)
+            if not token['is_confirmation_token']:
+                raise Exception("Некорректный тип токена")
+
             uid = urlsafe_base64_decode(uidb64).decode()
             temp_user = TemporaryUserData.objects.get(pk=uid)
-            token = AccessToken(token)
 
             if not CustomUser.objects.filter(username=temp_user.username).exists():
                 user = CustomUser.objects.create(
@@ -184,6 +155,12 @@ class ActivateAccountView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+def create_confirmation_token_for_reset_password(user):
+    token = RefreshToken.for_user(user)
+    token['is_confirmation_token'] = True
+    return str(token.access_token)
+
+
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
 
@@ -193,9 +170,9 @@ class PasswordResetRequestView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             user = User.objects.get(email=email)
-            token = default_token_generator.make_token(user)
+            token = create_confirmation_token_for_reset_password(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            link = f'https://um-stud.ru/auth/reset?uidb64={uid}&token={str(token.access_token)}'
+            link = f'https://um-stud.ru/auth/reset?uidb64={uid}&token={token}'
             full_link = link
             subject = "Сброс пароля"
             message = f"Пожалуйста, перейдите по ссылке, чтобы сбросить ваш пароль: {full_link}"
@@ -206,7 +183,7 @@ class PasswordResetRequestView(APIView):
 
 
 class PasswordResetConfirmView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(request_body=PasswordResetConfirmSerializer)
     def post(self, request, uidb64, token):
@@ -217,7 +194,9 @@ class PasswordResetConfirmView(APIView):
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
-            if not default_token_generator.check_token(user, token):
+            try:
+                UntypedToken(token)
+            except (InvalidToken, TokenError) as e:
                 raise ValueError("Недействительный токен")
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response({'error': 'Недействительный токен или UID.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -242,3 +221,16 @@ class SkillChangeView(ListAPIView):
     permission_classes = [AllowAny, ]
     queryset = Skills.objects.all()
     serializer_class = SkillsSerializer
+
+
+class ChangePasswordView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(request_body=ChangePasswordSerializer)
+    def post(self, request, *args, **kwargs):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            request.user.set_password(serializer.validated_data['new_password'])
+            request.user.save()
+            return Response({"message": "Пароль успешно изменен."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -204,4 +204,22 @@ class TempUserRegistrationSerializer(serializers.ModelSerializer):
         return TemporaryUserData.objects.create(**validated_data)
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    new_password_confirm = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Старый пароль неверен.")
+        return value
+
+    def validate(self, data):
+        if data['new_password'] != data['new_password_confirm']:
+            raise serializers.ValidationError({"new_password_confirm": "Новые пароли не совпадают."})
+        validate_password(data['new_password'])
+        return data
+
+
 
