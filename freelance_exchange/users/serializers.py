@@ -222,4 +222,24 @@ class ChangePasswordSerializer(serializers.Serializer):
         return data
 
 
+class BlacklistSerializer(serializers.ModelSerializer):
+    blocked_user_username = serializers.ReadOnlyField(source='blocked_user.username')
+
+    class Meta:
+        model = BlackList
+        fields = (
+            'id',
+            'blocked_user',
+            'blocked_user_username',
+            'created_at'
+        )
+        read_only_fields = ['id', 'created_at']
+
+
+class CreateBlacklistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlackList
+        fields = ['blocked_user']
+
+
 

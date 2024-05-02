@@ -104,3 +104,17 @@ class PasswordResetToken(models.Model):
         remaining_time = cooldown_period - time_since_last_used
         remaining_minutes = int(remaining_time.total_seconds() // (3600*24))
         return False, f"Следующую возможность сброса пароля можно будет использовать через {remaining_minutes} дней."
+
+
+class BlackList(models.Model):
+    owner = models.ForeignKey(CustomUser, related_name='blacklist_owner', on_delete=models.CASCADE)
+    blocked_user = models.ForeignKey(CustomUser, related_name='blocked_user', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Черный список'
+        verbose_name_plural = 'Черный список'
+        unique_together = ('owner', 'blocked_user')
+
+    def __str__(self):
+        return f"{self.owner.username} заблокировал {self.blocked_user.username}"

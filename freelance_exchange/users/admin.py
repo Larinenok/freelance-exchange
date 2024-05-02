@@ -62,6 +62,15 @@ class TemporaryUserDataAdmin(admin.ModelAdmin):
     )
 
 
+class BlakListAdmin(admin.ModelAdmin):
+    model = BlackList
+    list_display = (
+        'owner',
+        'blocked_user'
+    )
+
+
 admin.site.register(Skills, SkillsAdmin)
 admin.site.register(Ip)
 admin.site.register(TemporaryUserData, TemporaryUserDataAdmin)
+admin.site.register(BlackList, BlakListAdmin)

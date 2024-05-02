@@ -21,7 +21,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, UntypedToken
 from .serializers import ListUserInfo, DetailUserProfile, UserPutSerializer, PhotoPatch, UserLoginSerializer, \
     UserRegistrationSerializer, CustomUserSerializer, SkillsSerializer, PasswordResetRequestSerializer, \
-    PasswordResetConfirmSerializer, TempUserRegistrationSerializer, ChangePasswordSerializer
+    PasswordResetConfirmSerializer, TempUserRegistrationSerializer, ChangePasswordSerializer, BlacklistSerializer, \
+    CreateBlacklistSerializer
 from rest_framework import generics, status, permissions, request
 from .models import *
 #from ads.models import *
@@ -244,3 +245,42 @@ class ChangePasswordView(GenericAPIView):
             request.user.save()
             return Response({"message": "Пароль успешно изменен."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BlacklistListView(generics.ListAPIView):
+    serializer_class = BlacklistSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return BlackList.objects.filter(owner=user)
+
+
+class AddToBlacklistView(generics.CreateAPIView):
+    serializer_class = CreateBlacklistSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        if response.status_code == status.HTTP_201_CREATED:
+            response.data = {'message': 'Пользователь успешно добавлен в черный список.'}
+        return response
+
+
+class RemoveFromBlacklistView(generics.DestroyAPIView):
+    serializer_class = BlacklistSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'blocked_user__id'
+
+    def get_queryset(self):
+        user = self.request.user
+        return BlackList.objects.filter(owner=user)
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+            return Response({'message': 'Пользователь успешно удален из черного списка.'}, status=status.HTTP_200_OK)
+        return response
