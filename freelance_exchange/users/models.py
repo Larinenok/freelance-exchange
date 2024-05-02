@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from pytils.translit import slugify
-from django.utils.timezone import now
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 from stars.models import Star
 
@@ -49,7 +52,7 @@ class CustomUser(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='Логин')
     first_name = models.CharField(max_length=150, blank=False, verbose_name='Имя')
     last_name = models.CharField(max_length=150, blank=False, verbose_name='Фамилия')
-    email = models.EmailField(blank=True, verbose_name='Почта')
+    email = models.EmailField(unique=True, blank=True, verbose_name='Почта')
     patronymic = models.CharField(max_length=50, null=True, blank=True, verbose_name='Отчество')
     phone = models.CharField(max_length=30, null=True, blank=True, verbose_name='Телефон')
     place_study_work = models.CharField(max_length=100, null=True, blank=True, verbose_name='Место работы, учебы')
@@ -75,3 +78,29 @@ class CustomUser(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ['username']
+
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    token = models.CharField(max_length=255, unique=True)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    email_sent = models.BooleanField(default=True)
+
+    def mark_as_used(self):
+        self.is_used = True
+        self.save()
+
+    def can_send_new_request(user):
+        latest_request = PasswordResetToken.objects.filter(user=user).order_by('-created_at').first()
+        if not latest_request:
+            return True, None
+        if not latest_request.is_used:
+            return False, "Письмо уже отправлено на почту."
+        cooldown_period = timezone.timedelta(days=90)
+        time_since_last_used = timezone.now() - latest_request.created_at
+        if time_since_last_used > cooldown_period:
+            return True, None
+        remaining_time = cooldown_period - time_since_last_used
+        remaining_minutes = int(remaining_time.total_seconds() // (3600*24))
+        return False, f"Следующую возможность сброса пароля можно будет использовать через {remaining_minutes} дней."

@@ -107,7 +107,7 @@ class UserRegistrationAPIView(APIView):
         if serializer.is_valid():
             temp_user = serializer.save()
             self.send_verification_email(temp_user, request)
-            return Response({"message": "Пользователь успешно создан"}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Необходимо подтвердить аккаунт по почте"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def send_verification_email(self, user, request):
@@ -170,6 +170,11 @@ class PasswordResetRequestView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             user = User.objects.get(email=email)
+
+            can_send, message = PasswordResetToken.can_send_new_request(user)
+            if not can_send:
+                return Response({'message': message}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
             token = create_confirmation_token_for_reset_password(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             link = f'https://um-stud.ru/auth/reset?uidb64={uid}&token={token}'
@@ -177,6 +182,9 @@ class PasswordResetRequestView(APIView):
             subject = "Сброс пароля"
             message = f"Пожалуйста, перейдите по ссылке, чтобы сбросить ваш пароль: {full_link}"
             send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email])
+
+            PasswordResetToken.objects.create(user=user, token=token, email_sent=True)
+
             return Response({'message': 'Инструкции по сбросу пароля отправлены на вашу почту.'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -194,16 +202,18 @@ class PasswordResetConfirmView(APIView):
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
-            try:
-                UntypedToken(token)
-            except (InvalidToken, TokenError) as e:
-                raise ValueError("Недействительный токен")
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            return Response({'error': 'Недействительный токен или UID.'}, status=status.HTTP_400_BAD_REQUEST)
+            password_reset_token = PasswordResetToken.objects.get(user=user, token=token)
 
-        user.set_password(serializer.validated_data['new_password'])
-        user.save()
-        return Response({'message': 'Ваш пароль успешно изменен.'}, status=status.HTTP_200_OK)
+            if password_reset_token.is_used:
+                raise ValueError("Токен уже использован.")
+
+            password_reset_token.mark_as_used()
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({'message': 'Ваш пароль успешно изменен.'}, status=status.HTTP_200_OK)
+
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist, PasswordResetToken.DoesNotExist) as e:
+            return Response({'error': 'Недействительный токен или UID.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserProfileView(RetrieveAPIView):
