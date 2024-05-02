@@ -1,5 +1,7 @@
 *.pyc
 venv
+.gitignore
 **/__pycache__/
 .idea
 freelance_exchange/.env
+freelance_exchange/db
