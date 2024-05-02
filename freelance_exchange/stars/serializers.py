@@ -7,7 +7,7 @@ from users.models import CustomUser
 class ListStarInfo(serializers.ModelSerializer):
     class Meta:
         model = Star
-        fields = ['count', 'username', 'author']
+        fields = ['count', 'username', 'author', 'message']
 
     
 class GetStarInfo(serializers.ModelSerializer):
@@ -37,7 +37,7 @@ class InputStarsSerializer(serializers.ModelSerializer):
 class ChangeStarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Star
-        fields = ['count', 'username']
+        fields = ['count', 'username', 'message']
 
     def validate(self, data):
         if 0 > data['count'] or data['count'] > 5:

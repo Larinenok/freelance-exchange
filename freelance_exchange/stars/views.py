@@ -27,9 +27,9 @@ class GetByUsernameAPIStar(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             stars = Star.objects.filter(username=request.data.get('username'))
-            stars = GetStarInfo(stars, many=True).data
+            stars = ListStarInfo(stars, many=True).data
 
-            return Response({request.data.get('username'): stars}, status=status.HTTP_200_OK)
+            return Response(stars, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
