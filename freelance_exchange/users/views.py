@@ -10,7 +10,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import ValidationError, AuthenticationFailed
+from rest_framework.exceptions import ValidationError, AuthenticationFailed, PermissionDenied
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView, RetrieveAPIView, \
     CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -22,7 +22,7 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, UntypedTo
 from .serializers import ListUserInfo, DetailUserProfile, UserPutSerializer, PhotoPatch, UserLoginSerializer, \
     UserRegistrationSerializer, CustomUserSerializer, SkillsSerializer, PasswordResetRequestSerializer, \
     PasswordResetConfirmSerializer, TempUserRegistrationSerializer, ChangePasswordSerializer, BlacklistSerializer, \
-    CreateBlacklistSerializer
+    CreateBlacklistSerializer, UserListForUsersSerializer
 from rest_framework import generics, status, permissions, request
 from .models import *
 #from ads.models import *
@@ -42,6 +42,12 @@ class APIUser(ListAPIView):
     permission_classes = [permissions.IsAdminUser, ]
     queryset = CustomUser.objects.all()
     serializer_class = ListUserInfo
+
+
+class UserListForUsers(ListAPIView):
+    permission_classes = [IsAuthenticated, ]
+    queryset = CustomUser.objects.all()
+    serializer_class = UserListForUsersSerializer
 
 
 class DetailUserView(RetrieveUpdateDestroyAPIView):
@@ -225,7 +231,12 @@ class UserProfileView(RetrieveAPIView):
 
     def get_object(self):
         slug = self.kwargs.get("slug")
-        return get_object_or_404(CustomUser, slug=slug)
+        user = get_object_or_404(CustomUser, slug=slug)
+
+        if BlackList.objects.filter(owner=user, blocked_user=self.request.user).exists():
+            raise PermissionDenied("Вы не можете просматривать этот профиль, так как находитесь в черном списке пользователя.")
+
+        return user
 
 
 class SkillChangeView(ListAPIView):

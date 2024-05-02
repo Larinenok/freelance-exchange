@@ -242,4 +242,32 @@ class CreateBlacklistSerializer(serializers.ModelSerializer):
         fields = ['blocked_user']
 
 
+class UserListForUsersSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    skills = serializers.StringRelatedField(many=True)
+    birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            'username',
+            'slug',
+            'first_name',
+            'last_name',
+            'patronymic',
+            'email',
+            'phone',
+            'place_study_work',
+            'skills',
+            'birth_date',
+            'description',
+            'language',
+            'photo',
+            'views',
+            'stars',
+            # 'stars_freelancer',
+            # 'stars_customer',
+        )
+
+
 
