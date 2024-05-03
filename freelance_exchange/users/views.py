@@ -1,5 +1,4 @@
 import uuid
-
 from decouple import config
 from django.contrib.auth.tokens import default_token_generator
 from django.http import Http404

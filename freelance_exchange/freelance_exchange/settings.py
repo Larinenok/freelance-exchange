@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'stars.apps.StarsConfig',
     'users.apps.UsersConfig',
     'telegram_bot',
-    'background_task'
+    #'background_task',
 ]
 
 
