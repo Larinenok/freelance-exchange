@@ -59,10 +59,23 @@ class CustomUserSerializer(serializers.ModelSerializer):
         )
 
 
+class PortfolioItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortfolioItem
+        fields = (
+            'id',
+            'title',
+            'description',
+            'file',
+            'uploaded_at'
+        )
+
+
 class DetailUserProfile(serializers.ModelSerializer):
     email = serializers.EmailField()
     skills = SkillsSerializer(many=True, read_only=True)
     birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
+    portfolio_items = PortfolioItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
@@ -84,6 +97,7 @@ class DetailUserProfile(serializers.ModelSerializer):
             'photo',
             'views',
             'stars',
+            'portfolio_items',
             # 'stars_freelancer',
             # 'stars_customer',
         )

@@ -118,3 +118,18 @@ class BlackList(models.Model):
 
     def __str__(self):
         return f"{self.owner.username} заблокировал {self.blocked_user.username}"
+
+
+class PortfolioItem(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='portfolio_items')
+    title = models.CharField(max_length=255, verbose_name='Название')
+    description = models.TextField(blank=True, verbose_name='Описание')
+    file = models.FileField(upload_to="portfolio/%Y/%m/%d/", verbose_name='Файл')
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата загрузки')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Файл работы'
+        verbose_name_plural = 'Файлы работ'
