@@ -19,6 +19,8 @@ class ListUserInfo(serializers.ModelSerializer):
             'id',
             'username',
             'slug',
+            'is_superuser',
+            'is_staff',
             'first_name',
             'last_name',
             'patronymic',
@@ -67,6 +69,8 @@ class DetailUserProfile(serializers.ModelSerializer):
         fields = (
             'username',
             'slug',
+            'is_superuser',
+            'is_staff',
             'first_name',
             'last_name',
             'patronymic',
@@ -222,15 +226,28 @@ class ChangePasswordSerializer(serializers.Serializer):
         return data
 
 
+class SimpleUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = (
+            'id',
+            'slug',
+            'first_name',
+            'last_name',
+            'patronymic',
+            'photo'
+        )
+        read_only_fields = fields
+
+
 class BlacklistSerializer(serializers.ModelSerializer):
-    blocked_user_username = serializers.ReadOnlyField(source='blocked_user.username')
+    blocked_user = SimpleUserProfileSerializer(read_only=True)
 
     class Meta:
         model = BlackList
         fields = (
             'id',
             'blocked_user',
-            'blocked_user_username',
             'created_at'
         )
         read_only_fields = ['id', 'created_at']
@@ -252,6 +269,8 @@ class UserListForUsersSerializer(serializers.ModelSerializer):
         fields = (
             'username',
             'slug',
+            'is_superuser',
+            'is_staff',
             'first_name',
             'last_name',
             'patronymic',
