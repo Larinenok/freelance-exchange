@@ -18,8 +18,8 @@
 - [x] stars (рейтинг)
 - [x] birthdate
 - [ ] number phone
-- [ ] place of work/study
-- [ ] skills
+- [x] place of work/study
+- [x] skills
 - [x] description
 - [ ] examples of works
 - [ ] count of works
