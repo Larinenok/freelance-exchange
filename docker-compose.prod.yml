@@ -44,7 +44,7 @@ services:
       - freelance_exchange/.env
     volumes:
       - ./db:/var/lib/postgresql:z
-
+#
 # networks:
 #   demo:
 #     # driver: bridge
