@@ -17,7 +17,7 @@
 - [x] email
 - [x] stars (рейтинг)
 - [x] birthdate
-- [ ] number phone
+- [x] number phone
 - [x] place of work/study
 - [x] skills
 - [x] description
