@@ -224,7 +224,7 @@ class PasswordResetConfirmView(APIView):
 
 class UserProfileView(RetrieveAPIView):
     serializer_class = DetailUserProfile
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [AllowAny]
     queryset = CustomUser.objects.all()
     lookup_field = 'slug'
 
@@ -232,8 +232,10 @@ class UserProfileView(RetrieveAPIView):
         slug = self.kwargs.get("slug")
         user = get_object_or_404(CustomUser, slug=slug)
 
-        if BlackList.objects.filter(owner=user, blocked_user=self.request.user).exists():
-            raise PermissionDenied("Вы не можете просматривать этот профиль, так как находитесь в черном списке пользователя.")
+        if self.request.user.is_authenticated:
+            if BlackList.objects.filter(owner=user, blocked_user=self.request.user).exists():
+                raise PermissionDenied(
+                    "Вы не можете просматривать этот профиль, так как находитесь в черном списке пользователя.")
 
         return user
 
