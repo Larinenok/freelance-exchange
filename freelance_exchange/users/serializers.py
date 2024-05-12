@@ -80,6 +80,7 @@ class DetailUserProfile(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = (
+            'id',
             'username',
             'slug',
             'is_superuser',
