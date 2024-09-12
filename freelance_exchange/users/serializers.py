@@ -1,3 +1,6 @@
+import re
+
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
@@ -169,9 +172,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password_confirm']
 
+    def validate_username(self, value):
+        if not re.match(r'^[a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError("Логин может содержать только латинские буквы, цифры и подчеркивания.")
+        return value
+
     def validate(self, data):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({"password": "Пароли не совпадают."})
+
+        if User.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError({"username": "Логин пользователя уже занят."})
+
+        if User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({"email": "Этот email уже используется."})
+
         return data
 
     def create(self, validated_data):
@@ -213,13 +228,27 @@ class TempUserRegistrationSerializer(serializers.ModelSerializer):
         model = TemporaryUserData
         fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password_confirm']
 
+    def validate_username(self, value):
+        if not re.match(r'^[a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError("Логин может содержать только латинские буквы, цифры и подчеркивания.")
+        return value
+
     def validate(self, data):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({"password": "Пароли не совпадают."})
+
+        if CustomUser.objects.filter(username=data['username']).exists() or TemporaryUserData.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError({"username": "Имя пользователя уже занято."})
+
+        if CustomUser.objects.filter(email=data['email']).exists() or TemporaryUserData.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({"email": "Этот email уже используется."})
+
         return data
 
     def create(self, validated_data):
         validated_data.pop('password_confirm', None)
+        hashed_password = make_password(validated_data['password'])
+        validated_data['password'] = hashed_password
         return TemporaryUserData.objects.create(**validated_data)
 
 

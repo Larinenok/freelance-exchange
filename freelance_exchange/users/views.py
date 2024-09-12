@@ -126,8 +126,43 @@ class UserRegistrationAPIView(APIView):
         send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email])
 
 
+# class ActivateAccountView(APIView):
+#     permission_classes = [AllowAny]
+#     def get(self, request, *args, **kwargs):
+#         uidb64 = kwargs.get('uidb64')
+#         token = kwargs.get('token')
+#         try:
+#             token = AccessToken(token)
+#             if not token['is_confirmation_token']:
+#                 raise Exception("Некорректный тип токена")
+#
+#             uid = urlsafe_base64_decode(uidb64).decode()
+#             temp_user = TemporaryUserData.objects.get(pk=uid)
+#
+#             if not CustomUser.objects.filter(username=temp_user.username).exists():
+#                 user = CustomUser.objects.create(
+#                     username=temp_user.username,
+#                     email=temp_user.email,
+#                     first_name=temp_user.first_name,
+#                     last_name=temp_user.last_name,
+#                     is_approved=True
+#                 )
+#                 user.set_password(temp_user.password)
+#                 user.save()
+#
+#                 temp_user.delete()
+#                 return Response({"message": "Аккаунт активирован"}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"message": "Аккаунт уже активирован"}, status=status.HTTP_200_OK)
+#
+#         except TemporaryUserData.DoesNotExist:
+#             return Response({"error": "Неверный токен или пользователь уже активирован"}, status=status.HTTP_404_NOT_FOUND)
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ActivateAccountView(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request, *args, **kwargs):
         uidb64 = kwargs.get('uidb64')
         token = kwargs.get('token')
@@ -139,6 +174,7 @@ class ActivateAccountView(APIView):
             uid = urlsafe_base64_decode(uidb64).decode()
             temp_user = TemporaryUserData.objects.get(pk=uid)
 
+            # Проверяем, существует ли пользователь с таким же username в основной таблице
             if not CustomUser.objects.filter(username=temp_user.username).exists():
                 user = CustomUser.objects.create(
                     username=temp_user.username,
@@ -147,10 +183,10 @@ class ActivateAccountView(APIView):
                     last_name=temp_user.last_name,
                     is_approved=True
                 )
-                user.set_password(temp_user.password)
+                user.password = temp_user.password  # Пароль уже зашифрован
                 user.save()
 
-                temp_user.delete()
+                temp_user.delete()  # Удаляем временного пользователя
                 return Response({"message": "Аккаунт активирован"}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Аккаунт уже активирован"}, status=status.HTTP_200_OK)
@@ -159,6 +195,7 @@ class ActivateAccountView(APIView):
             return Response({"error": "Неверный токен или пользователь уже активирован"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 def create_confirmation_token_for_reset_password(user):
