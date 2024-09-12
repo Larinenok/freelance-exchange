@@ -6,9 +6,8 @@ The web site that helps students to complete different tasks and help each other
 |---|---|
 | [Таушканов Александр]() | Frontend developer |
 | [Гнеушев Родион]() | Mobile developer |
-| [Аришина Маргарита]() |  |
 | [Немчинов Алеша]() | Mobile developer |
-| [Чирьев Егор]() | Designer |
+| [Чирьев Егор]() | ![alt text](https://github.com/Larinenok/freelance-exchange/blob/main/freelance_exchange/media/photos/2024/04/11/new_ava.jpg) |
 | [Лаврентьев Олег](https://github.com/Larinenok) | Backend devoloper |
 | [Лунёв Всеволод](https://github.com/skattetskiy) | Backend devoloper |
 
