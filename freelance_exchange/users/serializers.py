@@ -19,6 +19,8 @@ class ListUserInfo(serializers.ModelSerializer):
             'id',
             'username',
             'slug',
+            'is_superuser',
+            'is_staff',
             'first_name',
             'last_name',
             'patronymic',
@@ -57,16 +59,32 @@ class CustomUserSerializer(serializers.ModelSerializer):
         )
 
 
+class PortfolioItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortfolioItem
+        fields = (
+            'id',
+            'title',
+            'description',
+            'file',
+            'uploaded_at'
+        )
+
+
 class DetailUserProfile(serializers.ModelSerializer):
     email = serializers.EmailField()
     skills = SkillsSerializer(many=True, read_only=True)
     birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
+    portfolio_items = PortfolioItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
         fields = (
+            'id',
             'username',
             'slug',
+            'is_superuser',
+            'is_staff',
             'first_name',
             'last_name',
             'patronymic',
@@ -80,6 +98,7 @@ class DetailUserProfile(serializers.ModelSerializer):
             'photo',
             'views',
             'stars',
+            'portfolio_items',
             # 'stars_freelancer',
             # 'stars_customer',
         )
@@ -222,15 +241,28 @@ class ChangePasswordSerializer(serializers.Serializer):
         return data
 
 
+class SimpleUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = (
+            'id',
+            'slug',
+            'first_name',
+            'last_name',
+            'patronymic',
+            'photo'
+        )
+        read_only_fields = fields
+
+
 class BlacklistSerializer(serializers.ModelSerializer):
-    blocked_user_username = serializers.ReadOnlyField(source='blocked_user.username')
+    blocked_user = SimpleUserProfileSerializer(read_only=True)
 
     class Meta:
         model = BlackList
         fields = (
             'id',
             'blocked_user',
-            'blocked_user_username',
             'created_at'
         )
         read_only_fields = ['id', 'created_at']
@@ -252,6 +284,8 @@ class UserListForUsersSerializer(serializers.ModelSerializer):
         fields = (
             'username',
             'slug',
+            'is_superuser',
+            'is_staff',
             'first_name',
             'last_name',
             'patronymic',

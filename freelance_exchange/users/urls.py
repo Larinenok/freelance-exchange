@@ -1,7 +1,11 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import APIUser, DetailUserView, UserLoginAPIView, UserRegistrationAPIView, UserProfileView, SkillChangeView, \
     ActivateAccountView, PasswordResetRequestView, PasswordResetConfirmView, ChangePasswordView, BlacklistListView, \
-    AddToBlacklistView, RemoveFromBlacklistView, UserListForUsers
+    AddToBlacklistView, RemoveFromBlacklistView, UserListForUsers, PortfolioItemViewSet
+
+router = DefaultRouter()
+router.register(r'portfolio', PortfolioItemViewSet, basename='portfolio')
 
 urlpatterns = [
     path('list/', APIUser.as_view(), name='list_user'),
@@ -17,5 +21,6 @@ urlpatterns = [
     path('blacklist/add/', AddToBlacklistView.as_view(), name='add-to-blacklist'),
     path('blacklist/remove/<int:blocked_user__id>/', RemoveFromBlacklistView.as_view(), name='remove-from-blacklist'),
     path('listfull/', UserListForUsers.as_view(), name='user-list-for-users'),
+    path('', include(router.urls)),
     path('<slug:slug>/', UserProfileView.as_view(), name='user_profile'),
 ]

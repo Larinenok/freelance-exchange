@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 services:
   django_freelance_exchange:
@@ -7,8 +7,8 @@ services:
       context: .
       dockerfile: config/django/Dockerfile
     restart: on-failure
-    networks:
-      - demo
+    # networks:
+    #   - demo
     expose:
       - 8001
     volumes:
@@ -20,14 +20,14 @@ services:
 
   nginxfreelanceexchange:
     container_name: nginxfreelanceexchange
-    build: 
+    build:
       context: .
       dockerfile: config/nginx/Dockerfile
     restart: on-failure
-    networks:
-      - demo
-    expose:
-      - 80
+    # networks:
+    #   - demo
+    ports:
+      - 8000:80
     volumes:
       - ./freelance_exchange:/app/freelance_exchange:z
     links:
@@ -36,8 +36,8 @@ services:
   db_freelance_exchange:
     container_name: db_freelance_exchange
     image: postgres:15
-    networks:
-      - demo
+    # networks:
+    #   - demo
     expose:
       - 5432
     env_file:
@@ -82,7 +82,7 @@ services:
     tty: true
     stdin_open: true
 
-networks:
-  demo:
-    # driver: bridge
-    external: true
+# networks:
+#   demo:
+#     driver: bridge
+#     external: true

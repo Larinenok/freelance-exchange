@@ -70,7 +70,18 @@ class BlakListAdmin(admin.ModelAdmin):
     )
 
 
+class PortfoliAdmin(admin.ModelAdmin):
+    model = PortfolioItem
+    list_display = (
+        'user',
+        'title',
+        'file',
+        'uploaded_at'
+    )
+
+
 admin.site.register(Skills, SkillsAdmin)
 admin.site.register(Ip)
 admin.site.register(TemporaryUserData, TemporaryUserDataAdmin)
 admin.site.register(BlackList, BlakListAdmin)
+admin.site.register(PortfolioItem, PortfoliAdmin)

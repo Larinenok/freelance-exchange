@@ -21,8 +21,8 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, UntypedTo
 from .serializers import ListUserInfo, DetailUserProfile, UserPutSerializer, PhotoPatch, UserLoginSerializer, \
     UserRegistrationSerializer, CustomUserSerializer, SkillsSerializer, PasswordResetRequestSerializer, \
     PasswordResetConfirmSerializer, TempUserRegistrationSerializer, ChangePasswordSerializer, BlacklistSerializer, \
-    CreateBlacklistSerializer, UserListForUsersSerializer
-from rest_framework import generics, status, permissions, request
+    CreateBlacklistSerializer, UserListForUsersSerializer, PortfolioItemSerializer
+from rest_framework import generics, status, permissions, request, viewsets
 from .models import *
 #from ads.models import *
 #from stars.models import *
@@ -224,7 +224,7 @@ class PasswordResetConfirmView(APIView):
 
 class UserProfileView(RetrieveAPIView):
     serializer_class = DetailUserProfile
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [AllowAny]
     queryset = CustomUser.objects.all()
     lookup_field = 'slug'
 
@@ -232,8 +232,10 @@ class UserProfileView(RetrieveAPIView):
         slug = self.kwargs.get("slug")
         user = get_object_or_404(CustomUser, slug=slug)
 
-        if BlackList.objects.filter(owner=user, blocked_user=self.request.user).exists():
-            raise PermissionDenied("Вы не можете просматривать этот профиль, так как находитесь в черном списке пользователя.")
+        if self.request.user.is_authenticated:
+            if BlackList.objects.filter(owner=user, blocked_user=self.request.user).exists():
+                raise PermissionDenied(
+                    "Вы не можете просматривать этот профиль, так как находитесь в черном списке пользователя.")
 
         return user
 
@@ -294,3 +296,14 @@ class RemoveFromBlacklistView(generics.DestroyAPIView):
         if response.status_code == status.HTTP_204_NO_CONTENT:
             return Response({'message': 'Пользователь успешно удален из черного списка.'}, status=status.HTTP_200_OK)
         return response
+
+
+class PortfolioItemViewSet(viewsets.ModelViewSet):
+    serializer_class = PortfolioItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PortfolioItem.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
