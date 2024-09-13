@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 
 from django.conf import settings
@@ -6,8 +7,8 @@ from django.contrib.auth.models import AbstractUser
 from pytils.translit import slugify
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
-from stars.models import Star
 
 
 class Ip(models.Model):
@@ -36,7 +37,7 @@ class TemporaryUserData(models.Model):
     username = models.CharField(max_length=15, unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -65,6 +66,11 @@ class CustomUser(AbstractUser):
     views = models.ManyToManyField(Ip, blank=True, verbose_name='Просмотры профиля')
     stars = models.FloatField(null=True, blank=True, verbose_name='Рейтинг')
     is_approved = models.BooleanField(default=False, verbose_name='Подтвержден')
+
+    def clean(self):
+        super().clean()
+        if not re.match(r'^[a-zA-Z0-9_]+$', self.username):
+            raise ValidationError({'username': "Логин может содержать только латинские буквы, цифры и подчеркивания."})
 
     def save(self, *args, **kwargs):
         if not self.slug:
