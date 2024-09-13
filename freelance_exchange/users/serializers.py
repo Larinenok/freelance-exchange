@@ -328,8 +328,6 @@ class UserListForUsersSerializer(serializers.ModelSerializer):
             'photo',
             'views',
             'stars',
-            # 'stars_freelancer',
-            # 'stars_customer',
         )
 
 
