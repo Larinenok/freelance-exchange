@@ -11,6 +11,8 @@ services:
     #   - demo
     expose:
       - 8001
+    env_file:
+      - freelance_exchange/.env
     volumes:
       - ./freelance_exchange:/app/freelance_exchange:z
     depends_on:
