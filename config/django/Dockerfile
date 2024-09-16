@@ -11,6 +11,8 @@ COPY ./freelance_exchange/requirements.txt /app/freelance_exchange
 RUN ["pip3", "install", "-r", "requirements.txt"]
 
 # Runtime
-RUN chmod -R o+rw ./*
+COPY ./freelance_exchange/init-commands.sh /app/freelance_exchange/
+RUN chmod +x /app/freelance_exchange/init-commands.sh
+
 WORKDIR /app/freelance_exchange
 ENTRYPOINT ["./init-commands.sh"]
