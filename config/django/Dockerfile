@@ -8,6 +8,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 WORKDIR /app/freelance_exchange
 ADD ./config/uwsgi/uwsgi.ini /etc
 COPY ./freelance_exchange/requirements.txt /app/freelance_exchange
+COPY ./freelance_exchange/.env /app/freelance_exchange
 RUN ["pip3", "install", "-r", "requirements.txt"]
 
 # Runtime
