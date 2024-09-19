@@ -79,8 +79,8 @@ services:
     container_name: adminer
     image: adminer:4.8.1-standalone
     restart: on-failure
-    networks:
-      - demo
+    # networks:
+    #   - demo
     ports:
       - '8081:8080'
     links:
