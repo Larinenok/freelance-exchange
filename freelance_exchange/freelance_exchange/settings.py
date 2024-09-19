@@ -50,7 +50,9 @@ INSTALLED_APPS = [
     'ads.apps.AdsConfig',
     'stars.apps.StarsConfig',
     'users.apps.UsersConfig',
+    'chat',
     'telegram_bot',
+    'channels',
     #'background_task',
 ]
 
@@ -117,11 +119,25 @@ TEMPLATES = [
     },
 ]
 
+
+
+
 TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
-WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
+
+#WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
+ASGI_APPLICATION = "freelance_exchange.asgi.application"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('redis_container', 6379)],
+        },
+    },
+}
 
 
 # Database
