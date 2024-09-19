@@ -75,6 +75,17 @@ services:
     tty: true
     stdin_open: true
 
+  adminer:
+    container_name: adminer
+    image: adminer:4.8.1-standalone
+    restart: on-failure
+    networks:
+      - demo
+    ports:
+      - '8081:8080'
+    links:
+      - 'db_freelance_exchange'
+
 # networks:
 #   demo:
 #     driver: bridge
