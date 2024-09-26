@@ -23,7 +23,7 @@ class Ip(models.Model):
 
 
 class Skills(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Навыки')
+    name = models.CharField(max_length=255, verbose_name='Навыки')
 
     class Meta:
         verbose_name = 'Навык'

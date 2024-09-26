@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import APIUser, DetailUserView, UserLoginAPIView, UserRegistrationAPIView, UserProfileView, SkillChangeView, \
     ActivateAccountView, PasswordResetRequestView, PasswordResetConfirmView, ChangePasswordView, BlacklistListView, \
-    AddToBlacklistView, RemoveFromBlacklistView, UserListForUsers, PortfolioItemViewSet
+    AddToBlacklistView, RemoveFromBlacklistView, UserListForUsers, PortfolioItemViewSet, CreateSkillsView
 
 router = DefaultRouter()
 router.register(r'portfolio', PortfolioItemViewSet, basename='portfolio')
@@ -11,6 +11,7 @@ urlpatterns = [
     path('list/', APIUser.as_view(), name='list_user'),
     path('login/', UserLoginAPIView.as_view()),
     path('register/', UserRegistrationAPIView.as_view(), name='register_user'),
+    path('skills_create/', CreateSkillsView.as_view(), name='create_skills'),
     path('activate/<uidb64>/<token>/', ActivateAccountView.as_view(), name='activate_account'),
     path('password_reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password_reset_confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),

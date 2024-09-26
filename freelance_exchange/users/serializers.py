@@ -51,6 +51,12 @@ class SkillsSerializer(serializers.ModelSerializer):
         )
 
 
+class CreateSkillsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skills
+        fields = ('name',)
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
 
