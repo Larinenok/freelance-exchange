@@ -121,7 +121,8 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
-WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
+# WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
+ASGI_APPLICATION = 'freelance_exchange.asgi.application'
 
 
 # Database
