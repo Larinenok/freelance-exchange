@@ -28,6 +28,7 @@ class Message(models.Model):
     file = models.FileField(upload_to=chat_file_upload_path, blank=True, null=True, verbose_name='Прикрепленный файл')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Время отправки')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
+    is_read = models.BooleanField(default=False, verbose_name='Прочитано')
 
     class Meta:
         verbose_name_plural = 'Сообщения'

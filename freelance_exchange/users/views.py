@@ -11,7 +11,7 @@ from django.views import View
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError, AuthenticationFailed, PermissionDenied
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView, RetrieveAPIView, \
-    CreateAPIView
+    CreateAPIView, ListCreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -21,7 +21,7 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, UntypedTo
 from .serializers import ListUserInfo, DetailUserProfile, UserPutSerializer, PhotoPatch, UserLoginSerializer, \
     UserRegistrationSerializer, CustomUserSerializer, SkillsSerializer, PasswordResetRequestSerializer, \
     PasswordResetConfirmSerializer, TempUserRegistrationSerializer, ChangePasswordSerializer, BlacklistSerializer, \
-    CreateBlacklistSerializer, UserListForUsersSerializer, PortfolioItemSerializer
+    CreateBlacklistSerializer, UserListForUsersSerializer, PortfolioItemSerializer, CreateSkillsSerializer
 from rest_framework import generics, status, permissions, request, viewsets
 from .models import *
 #from ads.models import *
@@ -247,6 +247,29 @@ class SkillChangeView(ListAPIView):
     permission_classes = [AllowAny, ]
     queryset = Skills.objects.all()
     serializer_class = SkillsSerializer
+
+
+class CreateSkillsView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Skills.objects.all()
+    serializer_class = CreateSkillsSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def post(self, request, *args, **kwargs):
+        if isinstance(request.data, list):
+            many = True
+        else:
+            many = False
+
+        serializer = self.get_serializer(data=request.data, many=many)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ChangePasswordView(GenericAPIView):

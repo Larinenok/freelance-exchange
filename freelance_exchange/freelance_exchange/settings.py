@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'ads.apps.AdsConfig',
     'stars.apps.StarsConfig',
     'users.apps.UsersConfig',
-    'chat',
+    'chat.apps.ChatConfig',
     'telegram_bot',
     'channels',
     #'background_task',
@@ -127,8 +127,8 @@ TEMPLATE_LOADERS = (
 )
 
 
-#WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
-ASGI_APPLICATION = "freelance_exchange.asgi.application"
+WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
+#ASGI_APPLICATION = "freelance_exchange.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {

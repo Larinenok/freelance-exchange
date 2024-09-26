@@ -10,7 +10,7 @@ class CreateMessageView(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception = True)
+        serializer.is_valid(raise_exception=True)
         message = serializer.save
 
         message_serialzier = MessageSerializer(message)
