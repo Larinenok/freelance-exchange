@@ -36,26 +36,34 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
-    'drf_yasg',
+    'channels_auth_token_middlewares',
+    'channels',
+    # Приложения авторизации и работы с токенами
     'rest_framework',
+    'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
+
+    # Swagger и документация API
+    'drf_yasg',
+
+    # Ваши кастомные приложения
     'ads.apps.AdsConfig',
     'stars.apps.StarsConfig',
     'users.apps.UsersConfig',
     'chat.apps.ChatConfig',
     'telegram_bot',
-    'channels',
-    #'background_task',
-]
 
+    # Другие вспомогательные приложения
+    # 'background_task',
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
