@@ -50,7 +50,9 @@ urlpatterns = [
     # --- ADS ---
     path('api/ad/', include('ads.urls')),
     # --- STARS ---
-    path('api/stars/', include('stars.urls'))
+    path('api/stars/', include('stars.urls')),
+
+    path('api/chats/', include('chat.urls')),
 ]
 
 if settings.DEBUG:
