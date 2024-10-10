@@ -17,7 +17,7 @@ services:
       - ./freelance_exchange:/app/freelance_exchange:z
     depends_on:
       - db_freelance_exchange
-      - redis
+      - redis_container
     links:
       - db_freelance_exchange
 
