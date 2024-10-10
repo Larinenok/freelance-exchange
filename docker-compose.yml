@@ -15,8 +15,11 @@ services:
       - ./freelance_exchange:/app/freelance_exchange:z
     depends_on:
       - db_freelance_exchange
+      - redis
     links:
       - db_freelance_exchange
+    environment:
+      - DJANGO_SETTINGS_MODULE=freelance_exchange.settings
 
   nginxfreelanceexchange:
     container_name: nginx_freelance_exchange

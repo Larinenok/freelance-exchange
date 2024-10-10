@@ -15,7 +15,7 @@ class MessageSerializer(serializers.ModelSerializer):
     file = serializers.FileField(use_url=True)
 
     class Meta:
-        models = CustomUser
+        model = Message
         fields = ('id', 'room', 'sender', 'content', 'file', 'created_at', 'updated_at', 'is_read')
 
 
@@ -40,21 +40,21 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 
 class MessageCreateSerializer(serializers.ModelSerializer):
-    sender_id = serializers.IntegerField(write_only=True)
-    room_id = serializers.IntegerField(write_only=True)
     content = serializers.CharField()
     file = serializers.FileField(required=False)
 
     class Meta:
         model = Message
-        fields = ['sender_id', 'room_id', 'content', 'file']
+        fields = ('content', 'file')
 
     def create(self, validated_data):
-        sender_id = validated_data.pop('sender_id')
-        room_id = validated_data.pop('room_id')
+        sender = self.context['request'].user
+        room_id = self.context['chat_id']
 
-        sender = CustomUser.objects.get(id=sender_id)
-        room = ChatRoom.objects.get(id=room_id)
+        try:
+            room = ChatRoom.objects.get(id=room_id)
+        except ChatRoom.DoesNotExist:
+            raise serializers.ValidationError("Комната чата не найдена.")
 
         message = Message.objects.create(
             sender=sender,
@@ -62,3 +62,49 @@ class MessageCreateSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return message
+
+
+class ChatCreateSerializer(serializers.ModelSerializer):
+    participant_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = ChatRoom
+        fields = ['participant_id']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        participant_id = validated_data['participant_id']
+
+        try:
+            participant = CustomUser.objects.get(id=participant_id)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Пользователь не найден")
+
+        chat_room = ChatRoom.objects.filter(participants=user).filter(participants=participant).first()
+        if chat_room:
+            return chat_room
+
+        chat_room = ChatRoom.objects.create()
+        chat_room.participants.add(user, participant)
+        return chat_room
+
+
+class AddParticipantsSerializer(serializers.ModelSerializer):
+    participant_ids = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True
+    )
+
+    class Meta:
+        model = ChatRoom
+        fields = ['participant_ids']
+
+    def update(self, instance, validated_data):
+        participant_ids = validated_data['participant_ids']
+
+        participants = CustomUser.objects.filter(id__in=participant_ids)
+        if participants.count() != len(participant_ids):
+            raise serializers.ValidationError("Один или несколько пользователей не найдены.")
+
+        instance.participants.add(*participants)
+        return instance
+

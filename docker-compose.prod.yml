@@ -17,6 +17,7 @@ services:
       - ./freelance_exchange:/app/freelance_exchange:z
     depends_on:
       - db_freelance_exchange
+      - redis
     links:
       - db_freelance_exchange
 
@@ -67,7 +68,7 @@ services:
           cpus: '0.25'
           memory: 256M
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "$REDIS_PASSWORD", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
