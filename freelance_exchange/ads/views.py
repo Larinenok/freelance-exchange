@@ -13,19 +13,27 @@ from .serializers import *
 
 class AdListCreateView(generics.ListCreateAPIView):
     queryset = Ad.objects.all()
-    serializer_class = AdSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return AdCreateSerializer  # Используем для POST
+        return AdGetSerializer  # Используем для GET
+
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, slug=slugify(serializer.validated_data['title']))
+        serializer.save(author=self.request.user)
 
 class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ad.objects.all()
-    serializer_class = AdSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_update(self, serializer):
-        serializer.save(slug=slugify(serializer.validated_data['title']))
+    def get_serializer_class(self):
+        if self.request.method != 'GET':
+            return AdCreateSerializer  # Используем для всего остального
+        return AdGetSerializer  # Используем для GET
+
+    # def perform_update(self, serializer):
+    #     serializer.save(slug=slugify(serializer.validated_data['title']))
 
 class AdFileUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -81,10 +89,12 @@ class AdFileListView(generics.ListAPIView):
 
 class AdFileDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('file_id', openapi.IN_QUERY, description='ID of the file to delete', type=openapi.TYPE_INTEGER, required=True)
-    ])
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'file_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+        }
+    ))
     def delete(self, request, *args, **kwargs):
         file_id = request.query_params.get('file_id')
         if not file_id:
@@ -96,8 +106,13 @@ class AdFileDeleteView(APIView):
 
 class AdResponseView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-
-    @swagger_auto_schema(request_body=AdResponseSerializer)
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'ad_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'comment': openapi.Schema(type=openapi.TYPE_STRING),
+        }
+    ))
     def post(self, request, *args, **kwargs):
         ad_id = request.data.get('ad_id')
         comment = request.data.get('comment')
@@ -149,21 +164,21 @@ class AdExecutorView(APIView):
         return Response({'message': 'Executor set successfully'}, status=status.HTTP_200_OK)
 
 class UserAdsView(generics.ListAPIView):
-    serializer_class = AdSerializer
+    serializer_class = AdCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Ad.objects.filter(author=self.request.user)
 
 class UserClosedAdsView(generics.ListAPIView):
-    serializer_class = AdSerializer
+    serializer_class = AdCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Ad.objects.filter(executor=self.request.user, status=Ad.CLOSED)
 
 class AdsInProgressView(generics.ListAPIView):
-    serializer_class = AdSerializer
+    serializer_class = AdCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):

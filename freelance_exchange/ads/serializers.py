@@ -3,23 +3,30 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from pytils.translit import slugify
 from .models import Ad, AdFile, AdResponse
+from users.models import CustomUser
 
+class UserResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'first_name', 'last_name', 'photo', 'slug', 'patronymic')
 
-class AdSerializer(serializers.ModelSerializer):
-    files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
-
+class AdCreateSerializer(serializers.ModelSerializer):
+    # files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
+    # author = UserResponseSerializer(read_only=True)
+    # responders = UserResponseSerializer(many=True, read_only=True)
+    # deadlineStartAt = serializers.DateTimeField(read_only=True)
+    # status = serializers.CharField(read_only=True)
     class Meta:
         model = Ad
         fields = (
-            'id', 'title', 'description', 'category', 'type',
-            'budget', 'contact_info', 'status', 'files'
-        )
-        read_only_fields = (
-            'author', 'pub_date', 'executor'
+            'id', 'orderNumber', 'title',
+            'type', 'category', 'deadlineEndAt', 'budget', 'description',
         )
 
     def create(self, validated_data):
         files = validated_data.pop('files', [])
+        # Извлекаем текущего пользователя из контекста
+        author = self.context['request'].user
         ad = Ad.objects.create(**validated_data, slug=slugify(validated_data['title']))
         for file in files:
             ad.files.add(file)
@@ -43,6 +50,19 @@ class AdSerializer(serializers.ModelSerializer):
 
         return instance
 
+class AdGetSerializer(serializers.ModelSerializer):
+    author = UserResponseSerializer(read_only=True)
+    responders = UserResponseSerializer(many=True, read_only=True)
+    files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
+
+    class Meta:
+        model = Ad
+        fields = (
+            'id', 'orderNumber', 'responders', 'title',
+            'type', 'category', 'status', 'deadlineStartAt',
+            'deadlineEndAt', 'budget', 'description',
+            'author', 'files',
+        )
 
 class AdFileUploadSerializer(serializers.ModelSerializer):
     files = serializers.ListField(child=serializers.FileField(), required=True)
