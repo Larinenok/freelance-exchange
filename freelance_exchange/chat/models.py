@@ -6,7 +6,7 @@ from django.conf import settings
 
 class ChatRoom(models.Model):
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chat_rooms')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_chat_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания чата')
 
     class Meta:
         verbose_name_plural = 'Комнаты'

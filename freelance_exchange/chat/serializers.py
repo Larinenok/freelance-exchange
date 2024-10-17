@@ -6,7 +6,7 @@ from users.models import CustomUser
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'first_name', 'last_name')
+        fields = ('id', 'username', 'first_name', 'last_name', 'photo')
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -23,10 +23,11 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     participants = CustomUserSerializer(many=True)
     messages = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
-        fields = ['id', 'participants', 'created_at', 'messages', 'last_message']
+        fields = ['id', 'participants', 'created_at', 'last_message', 'messages', 'created_chat_at']
 
     def get_messages(self, obj):
         messages = obj.messages.all().order_by('created_at')
@@ -37,6 +38,12 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         if last_message:
             return MessageSerializer(last_message).data
         return None
+
+    def get_created_at(self, obj):
+        last_message = obj.messages.all().order_by('-created_at').first()
+        if last_message:
+            return last_message.created_at
+        return obj.created_at
 
 
 class MessageCreateSerializer(serializers.ModelSerializer):
