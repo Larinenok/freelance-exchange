@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import CustomUser
+from pytils.translit import slugify
 import os.path
 
 
@@ -39,6 +40,11 @@ class Ad(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Ad, self).save(*args, **kwargs)
 
 class AdResponse(models.Model):
     ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')
