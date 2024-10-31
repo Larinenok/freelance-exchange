@@ -12,7 +12,11 @@ from .views import (
     AdsInProgressView,
     CloseAdView,
     # DeleteAdView,
-    GetResponsesView
+    GetResponsesView,
+    TypeChangeView,
+    CreateTypesView,
+    CreateCategoriesView,
+    CategoryChangeView,
 )
 
 urlpatterns = [
@@ -29,4 +33,8 @@ urlpatterns = [
     path('ads/close/', CloseAdView.as_view(), name='close-ad'),
     # path('ads/delete/', DeleteAdView.as_view(), name='delete-ad'),
     path('ads/responses/', GetResponsesView.as_view(), name='get-responses'),
+    path('types_create/', CreateTypesView.as_view(), name='types-create'),
+    path('types_change/', TypeChangeView.as_view(), name='types-change'),
+    path('categories_create/', CreateCategoriesView.as_view(), name='categories-create'),
+    path('categories_change/', CategoryChangeView.as_view(), name='categories-change'),
 ]

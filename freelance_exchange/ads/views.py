@@ -11,6 +11,63 @@ from pytils.translit import slugify
 from .models import Ad, AdFile, AdResponse
 from .serializers import *
 
+class TypeChangeView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny, ]
+    queryset = Types.objects.all()
+    serializer_class = TypesSerializer
+
+
+class CreateTypesView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Types.objects.all()
+    serializer_class = CreateTypesSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def post(self, request, *args, **kwargs):
+        if isinstance(request.data, list):
+            many = True
+        else:
+            many = False
+
+        serializer = self.get_serializer(data=request.data, many=many)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class CategoryChangeView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny, ]
+    queryset = Categories.objects.all()
+    serializer_class = CategoriesSerializer
+
+
+class CreateCategoriesView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Categories.objects.all()
+    serializer_class = CreateCategoriesSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def post(self, request, *args, **kwargs):
+        if isinstance(request.data, list):
+            many = True
+        else:
+            many = False
+
+        serializer = self.get_serializer(data=request.data, many=many)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 class AdListCreateView(generics.ListCreateAPIView):
     queryset = Ad.objects.all()
     permission_classes = [permissions.IsAuthenticated]
