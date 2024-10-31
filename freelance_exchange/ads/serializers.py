@@ -2,8 +2,38 @@ from django.conf import settings
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from pytils.translit import slugify
-from .models import Ad, AdFile, AdResponse
+from .models import Ad, AdFile, AdResponse, Types, Categories
 from users.models import CustomUser
+import random
+
+class CategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = (
+            'id',
+            'name'
+        )
+
+
+class CreateCategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = ('name',)
+
+
+class TypesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Types
+        fields = (
+            'id',
+            'name'
+        )
+
+
+class CreateTypesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Types
+        fields = ('name',)
 
 class UserResponseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,6 +41,12 @@ class UserResponseSerializer(serializers.ModelSerializer):
         fields = ('id', 'first_name', 'last_name', 'photo', 'slug', 'patronymic')
 
 class AdCreateSerializer(serializers.ModelSerializer):
+    def generate_unique_order_number(self):
+        # Генерация уникального 6-значного номера
+        while True:
+            order_number = random.randint(100000, 999999)  # 6-значное случайное число
+            if not Ad.objects.filter(orderNumber=order_number).exists():
+                return order_number
     # files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
     # author = UserResponseSerializer(read_only=True)
     # responders = UserResponseSerializer(many=True, read_only=True)
@@ -19,15 +55,19 @@ class AdCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
         fields = (
-            'id', 'orderNumber', 'title',
+            'id', 'title',
             'type', 'category', 'deadlineEndAt', 'budget', 'description',
         )
 
     def create(self, validated_data):
+
+        types = validated_data.pop('type', [])
+        categories = validated_data.pop('category', [])
         files = validated_data.pop('files', [])
-        # Извлекаем текущего пользователя из контекста
-        author = self.context['request'].user
+        validated_data['orderNumber'] = self.generate_unique_order_number()
         ad = Ad.objects.create(**validated_data, slug=slugify(validated_data['title']))
+        ad.type.set(types)
+        ad.category.set(categories)
         for file in files:
             ad.files.add(file)
         return ad
@@ -54,6 +94,8 @@ class AdGetSerializer(serializers.ModelSerializer):
     author = UserResponseSerializer(read_only=True)
     responders = UserResponseSerializer(many=True, read_only=True)
     files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
+    type = serializers.StringRelatedField(many=True)
+    category = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Ad
