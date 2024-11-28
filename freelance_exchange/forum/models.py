@@ -21,6 +21,12 @@ class Discussion(models.Model):
         verbose_name_plural = 'Обсуждения'
         ordering = ['-created_at']
 
+    @property
+    def resolved_comment_content(self):
+        if self.resolved_comment:
+            return self.resolved_comment.content
+        return None
+
     def __str__(self):
         return self.title
 
@@ -37,5 +43,5 @@ class Comment(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        return f"Комментарий от {self.author.username} к обсуждению '{self.discussion.title}'"
+        return self.content
 
