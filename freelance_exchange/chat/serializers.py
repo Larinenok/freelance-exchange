@@ -7,6 +7,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'first_name', 'last_name', 'photo')
+        ref_name = "ChatCustomUser"
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -43,7 +44,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         last_message = obj.messages.all().order_by('-created_at').first()
         if last_message:
             return last_message.created_at
-        return obj.created_at
+        return None
 
 
 class MessageCreateSerializer(serializers.ModelSerializer):

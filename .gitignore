@@ -5,3 +5,11 @@ venv
 .idea
 freelance_exchange/.env
 freelance_exchange/db
+freelance_exchange/.env
+/freelance_exchange/static/
+/freelance_exchange/static/admin/
+/freelance_exchange/static/drf-yasg/
+/freelance_exchange/static/rest_framework/
+**/migrations/
+**/migrations/*.py
+**/migrations/*.pyc

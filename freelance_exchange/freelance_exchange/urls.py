@@ -53,6 +53,8 @@ urlpatterns = [
     path('api/stars/', include('stars.urls')),
 
     path('api/chats/', include('chat.urls')),
+
+    path('api/discussions/', include('forum.urls')),
 ]
 
 if settings.DEBUG:

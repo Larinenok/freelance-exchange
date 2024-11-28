@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'stars.apps.StarsConfig',
     'users.apps.UsersConfig',
     'chat.apps.ChatConfig',
+    'forum.apps.ForumConfig',
     'telegram_bot',
 
     # Другие вспомогательные приложения
