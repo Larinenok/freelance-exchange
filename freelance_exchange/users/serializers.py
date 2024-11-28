@@ -159,11 +159,13 @@ class UserLoginSerializer(serializers.Serializer):
 
         if user is None:
             raise serializers.ValidationError({
-                'login_or_email': "Неверный логин или пароль"
+                'login_or_email': "Неверный логин или пароль",
+                'password': "Неверный логин или пароль"
             })
 
         if not authenticate(username=user.username, password=password):
             raise serializers.ValidationError({
+                'login_or_email': "Неверный логин или пароль",
                 'password': "Неверный логин или пароль"
             })
 

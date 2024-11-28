@@ -11,6 +11,7 @@ from pytils.translit import slugify
 from .models import Ad, AdFile, AdResponse
 from .serializers import *
 
+
 class TypeChangeView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny, ]
     queryset = Types.objects.all()
@@ -38,6 +39,7 @@ class CreateTypesView(generics.ListCreateAPIView):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 
 class CategoryChangeView(generics.ListAPIView):
@@ -68,17 +70,23 @@ class CreateCategoriesView(generics.ListCreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
 class AdListCreateView(generics.ListCreateAPIView):
     queryset = Ad.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
-            return AdCreateSerializer  # Используем для POST
-        return AdGetSerializer  # Используем для GET
+            return AdCreateSerializer
+        return AdGetSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
 
 class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ad.objects.all()
@@ -88,6 +96,11 @@ class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method != 'GET':
             return AdCreateSerializer  # Используем для всего остального
         return AdGetSerializer  # Используем для GET
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     # def perform_update(self, serializer):
     #     serializer.save(slug=slugify(serializer.validated_data['title']))
