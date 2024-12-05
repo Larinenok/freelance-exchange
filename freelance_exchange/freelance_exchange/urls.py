@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.conf.urls.static import static
+from drf_yasg.generators import OpenAPISchemaGenerator
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -24,6 +25,13 @@ from freelance_exchange import settings
 from users.views import *
 from ads.views import *
 from stars.views import *
+
+
+class CustomSchemaGenerator(OpenAPISchemaGenerator):
+    def get_schema(self, request=None, public=False):
+        schema = super().get_schema(request, public)
+        schema.schemes = ['https', 'http']  # Добавьте необходимые схемы
+        return schema
 
 
 schema_view = get_schema_view(
@@ -37,6 +45,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    generator_class=CustomSchemaGenerator,
 )
 
 urlpatterns = [

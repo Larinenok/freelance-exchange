@@ -98,9 +98,8 @@ REST_FRAMEWORK = {
     'DATE_INPUT_FORMATS': ["%d.%m.%Y"],
 }
 
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SWAGGER_SETTINGS = {
+    'DEFAULT_API_URL': config('Swagger_url'),
     'SECURITY_DEFINITIONS': {
         'api_key': {
             'type': 'apiKey',
@@ -109,6 +108,8 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 DATE_INPUT_FORMATS = ["%d.%m.%Y"]
 
