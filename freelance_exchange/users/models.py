@@ -24,8 +24,7 @@ def user_portfolio_path(instance, filename):
     return f"{instance.user.username}/portfolio/{filename}"
 
 
-AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
-DEFAULT_USER_PHOTO = f"https://{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net/default/default_avatar.jpg"
+DEFAULT_USER_PHOTO = "default/default_avatar.jpg"
 
 
 class Ip(models.Model):
