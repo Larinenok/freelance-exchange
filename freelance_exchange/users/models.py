@@ -2,6 +2,7 @@ import re
 import uuid
 from datetime import timedelta
 
+from decouple import config
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -21,6 +22,10 @@ def user_portfolio_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4()}'.{ext}"
     return f"{instance.user.username}/portfolio/{filename}"
+
+
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+DEFAULT_USER_PHOTO = f"https://{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net/default/default_avatar.jpg"
 
 
 class Ip(models.Model):
@@ -72,7 +77,7 @@ class CustomUser(AbstractUser):
     slug = models.SlugField(max_length=15, unique=True, null=False, blank=False, verbose_name='Slug')
     birth_date = models.DateField(null=True, blank=True, verbose_name='Дата рождения')
     skills = models.ManyToManyField(Skills, verbose_name='Навыки')
-    photo = models.ImageField(upload_to=user_photo_path, default='default/default.jpg', blank=True, verbose_name='Аватар')
+    photo = models.ImageField(upload_to=user_photo_path, default=DEFAULT_USER_PHOTO, blank=True, verbose_name='Аватар')
     description = models.TextField(default='', blank=True, verbose_name='Описание')
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name='Язык')
     views = models.ManyToManyField(Ip, blank=True, verbose_name='Просмотры профиля')

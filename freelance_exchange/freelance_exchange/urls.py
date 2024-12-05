@@ -42,9 +42,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
 
-    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('admin/', admin.site.urls),
-    #path('profile/<slug:slug_name>/', profile),
     # --- USERS ---
     path('api/users/', include('users.urls')),
     # --- ADS ---
