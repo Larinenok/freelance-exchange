@@ -47,11 +47,6 @@ class AdCreateSerializer(serializers.ModelSerializer):
             order_number = random.randint(100000, 999999)  # 6-значное случайное число
             if not Ad.objects.filter(orderNumber=order_number).exists():
                 return order_number
-    # files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
-    # author = UserResponseSerializer(read_only=True)
-    # responders = UserResponseSerializer(many=True, read_only=True)
-    # deadlineStartAt = serializers.DateTimeField(read_only=True)
-    # status = serializers.CharField(read_only=True)
     class Meta:
         model = Ad
         fields = (
@@ -74,15 +69,22 @@ class AdCreateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         files = validated_data.pop('files', [])
+        categories = validated_data.pop('category', None)
+        types = validated_data.pop('type', None)
+
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
-        instance.category = validated_data.get('category', instance.category)
-        instance.type = validated_data.get('type', instance.type)
         instance.budget = validated_data.get('budget', instance.budget)
         instance.contact_info = validated_data.get('contact_info', instance.contact_info)
+        instance.deadlineEndAt = validated_data.get('deadlineEndAt', instance.deadlineEndAt)
         instance.save()
 
         # Update files
+        if categories is not None:
+            instance.category.set(categories)
+        if types is not None:
+            instance.type.set(types)
+
         if files:
             instance.files.clear()
             for file in files:

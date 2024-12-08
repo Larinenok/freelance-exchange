@@ -32,7 +32,7 @@ class Ad(models.Model):
     orderNumber = models.IntegerField(verbose_name='Номер заказа', unique=True, blank=True)
     id = models.AutoField(primary_key=True)
     slug = models.SlugField(max_length=210, unique=False, null=True)
-    description = models.TextField(max_length=1000, verbose_name='Описание')
+    description = models.TextField(verbose_name='Описание')
     budget = models.IntegerField(verbose_name='Бюджет')
     deadlineStartAt = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     deadlineEndAt = models.DateTimeField(verbose_name='Дата публикации', null=True)

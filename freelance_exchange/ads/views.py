@@ -94,8 +94,8 @@ class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_serializer_class(self):
         if self.request.method != 'GET':
-            return AdCreateSerializer  # Используем для всего остального
-        return AdGetSerializer  # Используем для GET
+            return AdCreateSerializer
+        return AdGetSerializer
 
     def get_permissions(self):
         if self.request.method == 'GET':
