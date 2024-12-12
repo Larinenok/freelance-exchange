@@ -95,6 +95,7 @@ class AdCreateSerializer(serializers.ModelSerializer):
 class AdGetSerializer(serializers.ModelSerializer):
     author = UserResponseSerializer(read_only=True)
     responders = UserResponseSerializer(many=True, read_only=True)
+    executor = UserResponseSerializer(read_only=True)
     files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
     type = serializers.StringRelatedField(many=True)
     category = serializers.StringRelatedField(many=True)
@@ -102,7 +103,7 @@ class AdGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
         fields = (
-            'id', 'orderNumber', 'responders', 'title',
+            'id', 'executor', 'orderNumber', 'responders', 'title',
             'type', 'category', 'status', 'deadlineStartAt',
             'deadlineEndAt', 'budget', 'description',
             'author', 'files',
@@ -136,9 +137,10 @@ class AdFileUploadSerializer(serializers.ModelSerializer):
 
 
 class AdResponseSerializer(serializers.ModelSerializer):
+    responder = UserResponseSerializer(read_only=True)
     class Meta:
         model = AdResponse
-        fields = ('id', 'ad', 'responder', 'response_comment')
+        fields = ('id', 'responder', 'response_comment')
 
 
 class AdFileSerializer(serializers.ModelSerializer):
