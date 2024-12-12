@@ -252,7 +252,7 @@ class AdsInProgressView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Ad.objects.filter(executor=self.request.user)
+        return Ad.objects.filter(executor=self.request.user, status=Ad.IN_PROGRESS)
 
 class CloseAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]

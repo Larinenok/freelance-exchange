@@ -32,8 +32,18 @@ class AdResponseAdmin(admin.ModelAdmin):
     list_display = ('ad', 'id', 'responder', 'response_comment')
     pass
 
+class TypesAdmin(admin.ModelAdmin):
+    model = Types
+    list_display = ('name',)
 
 
+class CategoriesAdmin(admin.ModelAdmin):
+    model = Categories
+    list_display = ('name',)
+
+
+admin.site.register(Categories, CategoriesAdmin)
+admin.site.register(Types, TypesAdmin)
 admin.site.register(Ad, AdAdmin)
 admin.site.register(AdFile, AdFileAdmin)
 admin.site.register(AdResponse, AdResponseAdmin)
