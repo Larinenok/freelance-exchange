@@ -234,7 +234,7 @@ class AdExecutorView(APIView):
         return Response({'message': 'Executor set successfully'}, status=status.HTTP_200_OK)
 
 class UserAdsView(generics.ListAPIView):
-    serializer_class = AdCreateSerializer
+    serializer_class = AdGetSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
