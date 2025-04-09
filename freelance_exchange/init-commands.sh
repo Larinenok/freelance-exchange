@@ -1,5 +1,5 @@
 #!/bin/bash
-
+rm -rf /app/freelance_exchange/static/*
 python3 manage.py collectstatic --noinput
 python3 manage.py makemigrations --noinput
 python3 manage.py migrate --noinput
