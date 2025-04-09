@@ -1,3 +1,4 @@
+import logging
 import re
 import uuid
 from datetime import timedelta
@@ -10,12 +11,15 @@ from pytils.translit import slugify
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-
+logger = logging.getLogger(__name__)
 
 def user_photo_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
-    return f"{instance.username}/photo/{filename}"
+    logger.info(f"==> Uploading photo for: {instance.username} → {filename}")
+    path = f"{instance.username}/photo/{filename}"
+    logger.info(f"Путь файла: {path}")
+    return path
 
 
 def user_portfolio_path(instance, filename):
