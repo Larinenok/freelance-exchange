@@ -7,8 +7,6 @@ services:
       context: .
       dockerfile: config/django/Dockerfile
     restart: on-failure
-    # networks:
-    #   - demo
     expose:
       - 8001
     env_file:
@@ -27,8 +25,6 @@ services:
       context: .
       dockerfile: config/nginx/Dockerfile
     restart: on-failure
-    # networks:
-    #   - demo
     ports:
       - 8000:80
     volumes:
@@ -39,8 +35,6 @@ services:
   db_freelance_exchange:
     container_name: db_freelance_exchange
     image: postgres:15
-    # networks:
-    #   - demo
     expose:
       - 5432
     env_file:
@@ -76,18 +70,56 @@ services:
     tty: true
     stdin_open: true
 
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: .
+      dockerfile: config/django/celery.Dockerfile
+    command: ["/app/freelance_exchange/celery-entrypoint.sh"]
+    depends_on:
+      - db_freelance_exchange
+      - redis_container
+    environment:
+      - DJANGO_SETTINGS_MODULE=freelance_exchange.settings
+    volumes:
+      - ./freelance_exchange:/app/freelance_exchange:z
+
+  celery_beat:
+    container_name: celery_beat
+    build:
+      context: .
+      dockerfile: config/django/celery_beat.Dockerfile
+    command: /app/freelance_exchange/celery_beat_entrypoint.sh
+    depends_on:
+      - db_freelance_exchange
+      - redis_container
+    environment:
+      - DJANGO_SETTINGS_MODULE=freelance_exchange.settings
+    volumes:
+      - ./freelance_exchange:/app/freelance_exchange:z
+
+  flower:
+    container_name: flower_freelance_exchange
+    build:
+      context: .
+      dockerfile: config/django/flower.Dockerfile
+    command: ["celery", "-A", "freelance_exchange", "flower", "--port=5555"]
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis_container
+      - celery_worker
+    volumes:
+      - ./freelance_exchange:/app/freelance_exchange:z
+    environment:
+      - DJANGO_SETTINGS_MODULE=freelance_exchange.settings
+      - PYTHONPATH=/app/freelance_exchange
+
   adminer:
      container_name: adminer
      image: adminer:4.8.1-standalone
      restart: on-failure
-     # networks:
-     #   - demo
      ports:
        - '8081:8080'
      links:
        - 'db_freelance_exchange'
-
-# networks:
-#   demo:
-#     driver: bridge
-#     external: true
