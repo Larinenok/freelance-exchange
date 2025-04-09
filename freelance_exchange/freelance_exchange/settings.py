@@ -236,8 +236,8 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATIC_URL = '/static/'
-#STATIC_URL = 'https://um-stud.online/static/'
+# STATIC_URL = '/static/'
+STATIC_URL = 'https://um-stud.online/static/'
 
 # MEDIA_ROOT = ''
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
