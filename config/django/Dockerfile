@@ -33,6 +33,7 @@ COPY ./freelance_exchange/celery-entrypoint.sh /app/freelance_exchange
 RUN chmod +x /app/freelance_exchange/init-commands.sh
 RUN chmod +x /app/freelance_exchange/wait-for-it.sh
 RUN chmod +x /app/freelance_exchange/celery-entrypoint.sh
+RUN chmod +x /app/freelance_exchange/celery_beat_entrypoint.sh
 
 WORKDIR /app/freelance_exchange
 ENTRYPOINT ["/app/freelance_exchange/init-commands.sh"]
