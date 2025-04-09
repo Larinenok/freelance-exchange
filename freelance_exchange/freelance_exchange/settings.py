@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
+    'django_celery_beat',
 
     # Swagger и документация API
     'drf_yasg',
@@ -63,8 +64,6 @@ INSTALLED_APPS = [
     'forum.apps.ForumConfig',
     'telegram_bot',
 
-    # Другие вспомогательные приложения
-    # 'background_task',
 ]
 
 
@@ -158,7 +157,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis_container', 6379)],
+            "hosts": [('redis', 6379, {'password': config('REDIS_PASSWORD')})],
         },
     },
 }
@@ -167,12 +166,7 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 #
-# DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db'
-#    }
-# }
+
 
 DATABASES = {
     'default': {
@@ -216,6 +210,29 @@ CORS_ALLOWED_ALL_ORIGINS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'^/api/.*$'
+
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/1",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+    }
+}
+
+CELERY_BROKER_URL = 'redis://:Banan1337@redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://:Banan1337@redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

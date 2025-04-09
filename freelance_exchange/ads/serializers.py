@@ -92,9 +92,18 @@ class AdCreateSerializer(serializers.ModelSerializer):
 
         return instance
 
+
+class AdResponseSerializer(serializers.ModelSerializer):
+    responder = UserResponseSerializer(read_only=True)
+
+    class Meta:
+        model = AdResponse
+        fields = ('id', 'responder', 'response_comment')
+
+
 class AdGetSerializer(serializers.ModelSerializer):
     author = UserResponseSerializer(read_only=True)
-    responders = UserResponseSerializer(many=True, read_only=True)
+    responders = AdResponseSerializer(source='adresponse_set', many=True, read_only=True)
     files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
     type = serializers.StringRelatedField(many=True)
     category = serializers.StringRelatedField(many=True)
@@ -133,12 +142,6 @@ class AdFileUploadSerializer(serializers.ModelSerializer):
                 ad_file.save()
                 instance.append(ad_file)
         return instance
-
-
-class AdResponseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AdResponse
-        fields = ('id', 'ad', 'responder', 'response_comment')
 
 
 class AdFileSerializer(serializers.ModelSerializer):

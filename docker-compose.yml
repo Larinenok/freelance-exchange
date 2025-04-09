@@ -23,7 +23,7 @@ services:
 
   nginxfreelanceexchange:
     container_name: nginx_freelance_exchange
-    build: 
+    build:
       context: .
       dockerfile: config/nginx/Dockerfile
     restart: on-failure
@@ -53,20 +53,70 @@ services:
     container_name: redis_container
     networks:
       - demo
-    env_file:
-      - freelance_exchange/.env
+    environment:
+      - REDIS_PASSWORD=Banan1337
     expose:
       - 6379
     volumes:
       - ./redisdata:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: redis-server /usr/local/etc/redis/redis.conf
+    #command: redis-server /usr/local/etc/redis/redis.conf
+    command: redis-server --requirepass "Banan1337"
     healthcheck:
       test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 30s
       timeout: 10s
       retries: 5
     restart: unless-stopped
+
+
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: .
+      dockerfile: config/django/celery.Dockerfile
+    command: ["/app/freelance_exchange/celery-entrypoint.sh"]
+    depends_on:
+      - db_freelance_exchange
+      - redis
+    networks:
+      - demo
+    environment:
+      - DJANGO_SETTINGS_MODULE=freelance_exchange.settings
+
+
+  celery_beat:
+    container_name: celery_beat
+    build:
+      context: .
+      dockerfile: config/django/celery_beat.Dockerfile
+    command: /app/freelance_exchange/celery_beat_entrypoint.sh
+    volumes:
+      - ./freelance_exchange:/app/freelance_exchange:z
+    networks:
+      - demo
+    depends_on:
+      - celery_worker
+      - redis
+
+  flower:
+    build:
+      context: .
+      dockerfile: config/django/flower.Dockerfile
+    container_name: flower_freelance_exchange
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery_worker
+    networks:
+      - demo
+    command: ["celery", "-A", "freelance_exchange", "flower"]
+    volumes:
+      - ./freelance_exchange:/app/freelance_exchange:z
+    environment:
+      - DJANGO_SETTINGS_MODULE=freelance_exchange.settings
+      - PYTHONPATH=/app/freelance_exchange
 
 
   adminer:
