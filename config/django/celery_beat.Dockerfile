@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     curl
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade --upgrade-strategy eager --use-feature=fast-deps --no-cache-dir -r requirements.txt
 
 COPY ./freelance_exchange /app/freelance_exchange
 COPY ./freelance_exchange/celery_beat_entrypoint.sh /app/freelance_exchange

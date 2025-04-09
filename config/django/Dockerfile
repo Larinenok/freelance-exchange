@@ -18,7 +18,8 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     curl
 
-RUN pip3 install --no-cache-dir -r requirements.txt --verbose
+RUN pip install --upgrade --upgrade-strategy eager --use-feature=fast-deps --no-cache-dir -r requirements.txt
+
 
 RUN which celery || echo "celery NOT FOUND"
 RUN pip show celery || echo "celery package missing"
