@@ -53,14 +53,13 @@ services:
     container_name: redis_container
     networks:
       - demo
-    environment:
-      - REDIS_PASSWORD=Banan1337
+    env_file:
+      - freelance_exchange/.env
     expose:
       - 6379
     volumes:
       - ./redisdata:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
-    #command: redis-server /usr/local/etc/redis/redis.conf
     command: redis-server --requirepass "Banan1337"
     healthcheck:
       test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
@@ -93,6 +92,8 @@ services:
     command: /app/freelance_exchange/celery_beat_entrypoint.sh
     volumes:
       - ./freelance_exchange:/app/freelance_exchange:z
+    environment:
+      - DJANGO_SETTINGS_MODULE=freelance_exchange.settings
     networks:
       - demo
     depends_on:

@@ -136,6 +136,13 @@ TEMPLATE_LOADERS = (
 # WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
 ASGI_APPLICATION = 'freelance_exchange.asgi.application'
 
+REDIS_USER = config("REDIS_USER")
+REDIS_PASSWORD = config("REDIS_PASSWORD")
+REDIS_HOST = config("REDIS_HOST")
+REDIS_PORT = config("REDIS_PORT")
+REDIS_DB_CACHE = config("REDIS_DB_CACHE", default=1)
+REDIS_DB_CELERY = config("REDIS_DB_CELERY", default=0)
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -189,15 +196,18 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'^/api/.*$'
 
+REDIS_URL_CACHE = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_CACHE}"
+REDIS_URL_CELERY = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_CELERY}"
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://redis_container:6379/1",
+        "LOCATION": REDIS_URL_CACHE,
     }
 }
 
-CELERY_BROKER_URL = 'redis://:Banan1337@redis_container:6379/0'
-CELERY_RESULT_BACKEND = 'redis://:Banan1337@redis_container:6379/0'
+CELERY_BROKER_URL = REDIS_URL_CELERY
+CELERY_RESULT_BACKEND = REDIS_URL_CELERY
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
