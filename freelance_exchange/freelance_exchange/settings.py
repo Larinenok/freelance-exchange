@@ -136,7 +136,6 @@ TEMPLATE_LOADERS = (
 # WSGI_APPLICATION = 'freelance_exchange.wsgi.application'
 ASGI_APPLICATION = 'freelance_exchange.asgi.application'
 
-REDIS_USER = config("REDIS_USER")
 REDIS_PASSWORD = config("REDIS_PASSWORD")
 REDIS_HOST = config("REDIS_HOST")
 REDIS_PORT = config("REDIS_PORT")
