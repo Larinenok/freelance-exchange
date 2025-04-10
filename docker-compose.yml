@@ -15,7 +15,7 @@ services:
       - ./freelance_exchange:/app/freelance_exchange:z
     depends_on:
       - db_freelance_exchange
-      - redis
+      - redis_container
     links:
       - db_freelance_exchange
     environment:
@@ -48,7 +48,7 @@ services:
     volumes:
       - ./db:/var/lib/postgresql:z
 
-  redis:
+  redis_container:
     image: redis:latest
     container_name: redis_container
     networks:
@@ -78,7 +78,7 @@ services:
     command: ["/app/freelance_exchange/celery-entrypoint.sh"]
     depends_on:
       - db_freelance_exchange
-      - redis
+      - redis_container
     networks:
       - demo
     environment:
@@ -97,7 +97,7 @@ services:
       - demo
     depends_on:
       - celery_worker
-      - redis
+      - redis_container
 
   flower:
     build:
@@ -107,7 +107,7 @@ services:
     ports:
       - "5555:5555"
     depends_on:
-      - redis
+      - redis_container
       - celery_worker
     networks:
       - demo

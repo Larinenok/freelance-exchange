@@ -140,7 +140,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis', 6379, {'password': config('REDIS_PASSWORD')})],
+            "hosts": [('redis_container', 6379, {'password': config('REDIS_PASSWORD')})],
         },
     },
 }
@@ -192,12 +192,12 @@ CORS_URLS_REGEX = r'^/api/.*$'
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": "redis://redis_container:6379/1",
     }
 }
 
-CELERY_BROKER_URL = 'redis://:Banan1337@redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://:Banan1337@redis:6379/0'
+CELERY_BROKER_URL = 'redis://:Banan1337@redis_container:6379/0'
+CELERY_RESULT_BACKEND = 'redis://:Banan1337@redis_container:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
@@ -235,6 +235,7 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 #STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # STATIC_URL = '/static/'
 STATIC_URL = 'https://um-stud.online/static/'
