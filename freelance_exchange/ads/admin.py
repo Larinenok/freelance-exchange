@@ -2,15 +2,21 @@ from django.contrib import admin
 from .models import *
 from users.models import *
 
+
 class AdFileAdmin(admin.StackedInline):
     model = AdFile
+
 
 class AdResponseAdmin(admin.StackedInline):
     model = AdResponse
 
+
 class AdAdmin(admin.ModelAdmin):
     model = Ad
     readonly_fields = ('id',)
+    list_display = ('title', 'author', 'status', 'deadlineStartAt', 'deadlineEndAt')
+    search_fields = ('title', 'author__username', 'executor__username', 'orderNumber')
+    list_filter = ('status', 'deadlineStartAt', 'deadlineEndAt', 'author')
     fieldsets = [
         ('Title/category', {'fields': ['title', 'category', 'slug', 'id']}),
         ('Content', {'fields': ['description', 'budget']}),
@@ -24,13 +30,16 @@ class AdAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
 
+
 class AdFileAdmin(admin.ModelAdmin):
     pass
+
 
 class AdResponseAdmin(admin.ModelAdmin):
     model = AdResponse
     list_display = ('ad', 'id', 'responder', 'response_comment')
     pass
+
 
 class TypesAdmin(admin.ModelAdmin):
     model = Types

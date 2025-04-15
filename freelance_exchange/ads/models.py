@@ -35,7 +35,7 @@ class Ad(models.Model):
     description = models.TextField(verbose_name='Описание')
     budget = models.IntegerField(verbose_name='Бюджет')
     deadlineStartAt = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
-    deadlineEndAt = models.DateTimeField(verbose_name='Дата публикации', null=True)
+    deadlineEndAt = models.DateTimeField(verbose_name='Дедлайн', null=True)
     contact_info = models.CharField(max_length=200, verbose_name='Контактная информация')
     files = models.ManyToManyField('AdFile', related_name='ads', verbose_name='Файлы', blank=True)
     closed_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата закрытия')
