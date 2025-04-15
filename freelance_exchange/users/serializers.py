@@ -6,7 +6,10 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 from .models import *
 
+
 from django.contrib.auth import get_user_model, authenticate
+from stars.models import Star
+from stars.serializers import ListStarInfo
 
 User = get_user_model()
 
@@ -15,6 +18,10 @@ class ListUserInfo(serializers.ModelSerializer):
     email = serializers.EmailField()
     skills = serializers.StringRelatedField(many=True)
     birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y',])
+    stars = serializers.SerializerMethodField()
+
+    def get_stars(self, obj):
+        return round(obj.stars or 0, 2)
 
     class Meta:
         model = CustomUser
@@ -37,8 +44,6 @@ class ListUserInfo(serializers.ModelSerializer):
             'photo',
             'views',
             'stars',
-            # 'stars_freelancer',
-            # 'stars_customer',
         )
 
 
@@ -85,6 +90,15 @@ class DetailUserProfile(serializers.ModelSerializer):
     skills = SkillsSerializer(many=True, read_only=True)
     birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
     portfolio_items = PortfolioItemSerializer(many=True, read_only=True)
+    stars = serializers.SerializerMethodField()
+    ratings = serializers.SerializerMethodField()
+
+    def get_stars(self, obj):
+        return round(obj.stars or 0, 2)
+
+    def get_ratings(self, obj):
+        ratings = Star.objects.filter(target=obj)
+        return ListStarInfo(ratings, many=True).data
 
     class Meta:
         model = CustomUser
@@ -107,9 +121,8 @@ class DetailUserProfile(serializers.ModelSerializer):
             'photo',
             'views',
             'stars',
+            'ratings',
             'portfolio_items',
-            # 'stars_freelancer',
-            # 'stars_customer',
         )
 
 

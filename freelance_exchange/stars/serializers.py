@@ -1,66 +1,83 @@
 from rest_framework import serializers
 
-from .models import *
+from .models import Star
+from .utils import update_user_rating
 from users.models import CustomUser
+
+from ads.models import Ad
+
+
+class InputStarsSerializer(serializers.Serializer):
+    target_username = serializers.CharField(max_length=150)
+
+
+class AdShortInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ad
+        fields = ('id', 'title', 'orderNumber', 'status')
 
 
 class ListStarInfo(serializers.ModelSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    target_username = serializers.CharField(source='target.username', read_only=True)
+    ad = AdShortInfoSerializer(read_only=True)
+
     class Meta:
         model = Star
-        fields = ['count', 'username', 'author', 'message']
-
-    
-class GetStarInfo(serializers.ModelSerializer):
-    class Meta:
-        model = Star
-        fields = ['count', 'username']
-    
-    def validate(self, data):
-        if not CustomUser.objects.filter(username=data['username']).exists():
-            raise serializers.ValidationError({"username": "Такого пользователя не существует"})
-
-        return data
-
-
-class InputStarsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Star
-        fields = ['username']
-
-    def validate(self, data):
-        if not CustomUser.objects.filter(username=data['username']).exists():
-            raise serializers.ValidationError({"username": "Такого пользователя не существует"})
-
-        return data
+        fields = ('id', 'author_username', 'target_username', 'count', 'message', 'created_at', 'ad')
 
 
 class ChangeStarSerializer(serializers.ModelSerializer):
+    target_username = serializers.CharField(write_only=True)
+    ad_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = Star
-        fields = ['count', 'username', 'message']
+        fields = ('count', 'message', 'target_username', 'ad_id')
 
     def validate(self, data):
-        if 0 > data['count'] or data['count'] > 5:
-            raise serializers.ValidationError({'count': 'Рейтинг должен быть от 0 до 5'})
+        request = self.context.get('request')
+        target_username = data.get('target_username')
+        ad_id = data.get('ad_id')
 
-        if self.context['request'].user.username == data['username']:
-            raise serializers.ValidationError({"username": "Нельзя оставить отзыв самому себе"})
+        try:
+            target = CustomUser.objects.get(username=target_username)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError('Пользователь не найден.')
 
-        if not CustomUser.objects.filter(username=data['username']).exists():
-            raise serializers.ValidationError({"username": "Такого пользователя не существует"})
+        try:
+            ad = Ad.objects.get(id=ad_id)
+        except Ad.DoesNotExist:
+            raise serializers.ValidationError('Объявление не найдено.')
 
+        if request.user == target:
+            raise serializers.ValidationError('Нельзя оставить отзыв самому себе.')
+
+        if ad.author != request.user:
+            raise serializers.ValidationError('Вы не являетесь автором этого задания.')
+
+        if ad.executor != target:
+            raise serializers.ValidationError('Пользователь не является исполнителем этого задания.')
+
+        if Star.objects.filter(author=request.user, target=target, ad=ad).exists():
+            raise serializers.ValidationError('Вы уже оставили отзыв по этой задаче.')
+
+        data['target'] = target
+        data['ad'] = ad
         return data
 
     def create(self, validated_data):
-        star = Star.objects.filter(username=validated_data.get('username'), author=self.context['request'].user)
-        validated_data['author'] = self.context['request'].user.username
-        if star.exists():
-            return super().update(star[0], validated_data)
-        return super().create(validated_data)
+        request = self.context['request']
+        author = request.user
+        target = validated_data.pop('target')
+        ad = validated_data.pop('ad')
 
-    def delete(self, validated_data):
-        star = Star.objects.filter(username=validated_data.get('username'), author=self.context['request'].user)
-        if star.exists():
-            star[0].delete()
-            return []
-        raise serializers.ValidationError({"star": "Такого отзыва не существует"})
+        star = Star.objects.create(
+            author=author,
+            target=target,
+            ad=ad,
+            count=validated_data['count'],
+            message=validated_data.get('message', '')
+        )
+        update_user_rating(target)
+        return star
