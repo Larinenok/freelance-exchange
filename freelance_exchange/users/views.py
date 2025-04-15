@@ -50,9 +50,9 @@ class UserListForUsers(ListAPIView):
 
 
 class DetailUserView(RetrieveUpdateDestroyAPIView):
-    # serializer_class = DetailUserProfile
     permission_classes = [IsAuthenticated, ]
     queryset = CustomUser.objects.all()
+    serializer_class = DetailUserProfile
 
     def get_object(self):
         return self.request.user
