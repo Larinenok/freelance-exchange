@@ -21,6 +21,7 @@ class APIStar(ListAPIView):
 
 class GetByUsernameAPIStar(GenericAPIView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = ListStarInfo
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter(
