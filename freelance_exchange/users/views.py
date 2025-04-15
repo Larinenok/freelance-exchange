@@ -50,22 +50,35 @@ class UserListForUsers(ListAPIView):
 
 
 class DetailUserView(RetrieveUpdateDestroyAPIView):
-    serializer_class = DetailUserProfile
+    # serializer_class = DetailUserProfile
     permission_classes = [IsAuthenticated, ]
     queryset = CustomUser.objects.all()
 
     def get_object(self):
         return self.request.user
 
+    def get_serializer_class(self):
+        return DetailUserProfile
+
     @swagger_auto_schema(request_body=UserPutSerializer)
     def put(self, request, *args, **kwargs):
-        self.serializer_class = UserPutSerializer
-        return self.update(request, *args, **kwargs)
+        instance = self.get_object()
+        serializer = UserPutSerializer(instance, data=request.data, partial=False)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        response_serializer = DetailUserProfile(instance)
+        return Response(response_serializer.data)
 
     @swagger_auto_schema(request_body=PhotoPatch)
     def patch(self, request, *args, **kwargs):
-        self.serializer_class = PhotoPatch
-        return self.update(request, *args, **kwargs)
+        instance = self.get_object()
+        serializer = PhotoPatch(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        response_serializer = DetailUserProfile(instance)
+        return Response(response_serializer.data)
 
 
 class UserLoginAPIView(GenericAPIView):
