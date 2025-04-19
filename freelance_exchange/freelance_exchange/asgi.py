@@ -22,7 +22,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelance_exchange.settings')
 
 django_asgi_app = get_asgi_application()
 
-from channels_auth_token_middlewares.middleware import QueryStringSimpleJWTAuthTokenMiddleware
+# from channels_auth_token_middlewares.middleware import QueryStringSimpleJWTAuthTokenMiddleware
+from chat.middleware import CustomJWTAuthMiddleware
 from chat.consumers import ChatConsumer
 
 websocket_urlpatterns = [
@@ -33,7 +34,7 @@ application = ProtocolTypeRouter({
     "http": django_asgi_app,
 
     "websocket": AllowedHostsOriginValidator(
-        QueryStringSimpleJWTAuthTokenMiddleware(
+        CustomJWTAuthMiddleware(
             URLRouter(websocket_urlpatterns)
         )
     ),
