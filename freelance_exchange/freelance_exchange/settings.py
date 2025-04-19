@@ -141,12 +141,17 @@ REDIS_HOST = config("REDIS_HOST")
 REDIS_PORT = config("REDIS_PORT")
 REDIS_DB_CACHE = config("REDIS_DB_CACHE", default=1)
 REDIS_DB_CELERY = config("REDIS_DB_CELERY", default=0)
+REDIS_DB_CHANNELS = config("REDIS_DB_CHANNELS", default=2)
+
+REDIS_URL_CHANNELS = f"redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_CHANNELS}"
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('redis_container', 6379, {'password': config('REDIS_PASSWORD')})],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_CHANNELS}"
+            ],
         },
     },
 }

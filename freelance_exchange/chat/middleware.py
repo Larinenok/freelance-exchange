@@ -6,35 +6,25 @@ from channels.db import database_sync_to_async
 
 User = get_user_model()
 
+@database_sync_to_async
+def get_user(token):
+    try:
+        access_token = AccessToken(token)
+        return User.objects.get(id=access_token['user_id'])
+    except Exception as e:
+        print("JWT auth failed:", e)
+        return AnonymousUser()
+
 
 class CustomJWTAuthMiddleware:
     def __init__(self, inner):
         self.inner = inner
 
-    def __call__(self, scope):
-        return CustomJWTAuthMiddlewareInstance(scope, self)
-
-
-class CustomJWTAuthMiddlewareInstance:
-    def __init__(self, scope, middleware):
-        self.scope = dict(scope)
-        self.middleware = middleware
-
-    async def __call__(self, receive, send):
-        query_string = self.scope['query_string'].decode()
+    async def __call__(self, scope, receive, send):
+        query_string = scope['query_string'].decode()
         query_params = parse_qs(query_string)
         token = query_params.get('token', [None])[0]
 
-        self.scope['user'] = await self.get_user(token)
-        inner = self.middleware.inner(self.scope)
-        return await inner(receive, send)
+        scope['user'] = await get_user(token)
 
-    @database_sync_to_async
-    def get_user(self, token):
-        try:
-            access_token = AccessToken(token)
-            user = User.objects.get(id=access_token['user_id'])
-            return user
-        except Exception as e:
-            print("JWT auth failed:", e)
-            return AnonymousUser()
+        return await self.inner(scope, receive, send)
