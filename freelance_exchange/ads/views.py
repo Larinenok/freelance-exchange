@@ -10,6 +10,7 @@ from pytils.translit import slugify
 
 from .models import Ad, AdFile, AdResponse
 from .serializers import *
+from chat.models import ChatRoom
 
 
 class TypeChangeView(generics.ListAPIView):
@@ -254,6 +255,7 @@ class AdsInProgressView(generics.ListAPIView):
     def get_queryset(self):
         return Ad.objects.filter(executor=self.request.user, status=Ad.IN_PROGRESS)
 
+
 class CloseAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -280,7 +282,9 @@ class CloseAdView(APIView):
         ad.closed_date = timezone.now()
         ad.save()
 
-        return Response({'message': 'Ad closed successfully'}, status=status.HTTP_200_OK)
+        ChatRoom.objects.filter(ad=ad).update(is_closed=True)
+
+        return Response({'message': 'Ad closed successfully and related chats were closed.'}, status=status.HTTP_200_OK)
 
 class DeleteAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]

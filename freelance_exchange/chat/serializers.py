@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from .models import ChatRoom, Message
 from users.models import CustomUser
+from ads.models import Ad
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'first_name', 'last_name', 'photo')
+        fields = ('id', 'username', 'slug', 'first_name', 'last_name', 'photo')
         ref_name = "ChatCustomUser"
 
 
@@ -20,15 +21,26 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ('id', 'room', 'sender', 'content', 'file', 'created_at', 'updated_at', 'is_read')
 
 
+class AdSerializer(serializers.ModelSerializer):
+    author = CustomUserSerializer
+
+    class Meta:
+        model = Ad
+        fields = ('id', 'title', 'orderNumber', 'budget', 'author')
+
+
 class ChatRoomSerializer(serializers.ModelSerializer):
     participants = CustomUserSerializer(many=True)
     messages = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
+    interlocutor = serializers.SerializerMethodField()
+    is_closed = serializers.BooleanField()
+    ad = AdSerializer()
 
     class Meta:
         model = ChatRoom
-        fields = ['id', 'participants', 'created_at', 'last_message', 'messages', 'created_chat_at']
+        fields = ['id', 'participants', 'interlocutor', 'created_at', 'last_message', 'messages', 'created_chat_at', 'is_closed', 'ad']
 
     def get_messages(self, obj):
         messages = obj.messages.all().order_by('created_at')
@@ -44,6 +56,13 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         last_message = obj.messages.all().order_by('-created_at').first()
         if last_message:
             return last_message.created_at
+        return None
+
+    def get_interlocutor(self, obj):
+        request_user = self.context['request'].user
+        participants = obj.participants.exclude(id=request_user.id)
+        if obj.participants.count() == 2 and participants.exists():
+            return CustomUserSerializer(participants.first()).data
         return None
 
 
@@ -74,25 +93,35 @@ class MessageCreateSerializer(serializers.ModelSerializer):
 
 class ChatCreateSerializer(serializers.ModelSerializer):
     participant_id = serializers.IntegerField(write_only=True)
+    ad_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = ChatRoom
-        fields = ['participant_id']
+        fields = ['participant_id', 'ad_id']
 
     def create(self, validated_data):
         user = self.context['request'].user
         participant_id = validated_data['participant_id']
+        ad_id = validated_data['ad_id']
 
         try:
             participant = CustomUser.objects.get(id=participant_id)
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError("Пользователь не найден")
 
-        chat_room = ChatRoom.objects.filter(participants=user).filter(participants=participant).first()
-        if chat_room:
-            return chat_room
+        try:
+            ad = Ad.objects.get(id=ad_id)
+        except Ad.DoesNotExist:
+            raise serializers.ValidationError("Объявление не найдено")
 
-        chat_room = ChatRoom.objects.create()
+        existing_chat = ChatRoom.objects.filter(
+            ad=ad, participants=user
+        ).filter(participants=participant).first()
+
+        if existing_chat:
+            return existing_chat
+
+        chat_room = ChatRoom.objects.create(ad=ad)
         chat_room.participants.add(user, participant)
         return chat_room
 

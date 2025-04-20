@@ -6,14 +6,16 @@ from django.conf import settings
 
 class ChatRoom(models.Model):
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chat_rooms')
+    ad = models.ForeignKey('ads.Ad', on_delete=models.CASCADE, related_name='chat_rooms')
     created_chat_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания чата')
+    is_closed = models.BooleanField(default=False, verbose_name='Чат закрыт')
 
     class Meta:
         verbose_name_plural = 'Комнаты'
         verbose_name = 'Комната'
 
     def __str__(self):
-        return f"Комната {self.id} с участниками: {', '.join([user.username for user in self.participants.all()])}"
+        return f"Чат {self.id} | Заказ #{self.ad.orderNumber} | Участники: {', '.join([u.username for u in self.participants.all()])}"
 
 
 def chat_file_upload_path(instance, filename):

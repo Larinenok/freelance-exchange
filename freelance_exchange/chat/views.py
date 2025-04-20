@@ -13,8 +13,6 @@ class MessageListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         chat_id = self.kwargs.get('chat_id')
-        user = self.request.user
-
         return Message.objects.filter(room__id=chat_id)
 
     def get_serializer_class(self):
@@ -34,6 +32,15 @@ class MessageListCreateView(ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         chat_id = self.kwargs.get('chat_id')
+
+        try:
+            room = ChatRoom.objects.get(id=chat_id)
+        except ChatRoom.DoesNotExist:
+            return Response({'detail': 'Чат не найден.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if room.is_closed:
+            return Response({'detail': 'Чат закрыт, отправка сообщений недоступна.'}, status=status.HTTP_403_FORBIDDEN)
+
         data = request.data.copy()
         data['room_id'] = chat_id
 
@@ -58,7 +65,9 @@ class CreateChatView(CreateAPIView):
 
         return Response({
             "chat": chat_room.id,
-            "participants": [user.username for user in chat_room.participants.all()]
+            "participants": [user.username for user in chat_room.participants.all()],
+            "ad_id": chat_room.ad.id,
+            "is_closed": chat_room.is_closed
         }, status=status.HTTP_201_CREATED)
 
 
@@ -100,3 +109,21 @@ class AddParticipantsView(UpdateAPIView):
         }, status=status.HTTP_200_OK)
 
 
+class CloseChatView(UpdateAPIView):
+    queryset = ChatRoom.objects.all()
+    serializer_class = ChatRoomSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def update(self, request, *args, **kwargs):
+        chat = self.get_object()
+
+        if request.user != chat.ad.author:
+            return Response({'detail': 'Только автор объявления может закрыть чат.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if chat.is_closed:
+            return Response({'detail': 'Чат уже закрыт.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        chat.is_closed = True
+        chat.save()
+        return Response({'detail': 'Чат успешно закрыт.'}, status=status.HTTP_200_OK)
