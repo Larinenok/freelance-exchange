@@ -30,6 +30,16 @@ def save_message(room, sender, content):
     return Message.objects.create(room=room, sender=sender, content=content)
 
 
+@database_sync_to_async
+def mark_message_as_read(message_id):
+    try:
+        message = Message.objects.get(id=message_id)
+        message.is_read = True
+        message.save()
+    except Message.DoesNotExist:
+        pass
+
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
@@ -96,6 +106,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         timestamp = event['timestamp']
         message_id = event['messageId']
         file_url = event['file']
+
+        current_user = self.scope['user']
+        if current_user.id != sender['id']:
+            await mark_message_as_read(message_id)
 
         sender_data = {
             'id': sender.get('id'),
