@@ -94,6 +94,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'first_name': sender.first_name,
                         'last_name': sender.last_name,
                         'slug': sender.slug,
+                        'photo': sender.photo.url if sender.photo else None,
                     },
                     'timestamp': message.created_at.isoformat(),
                     'messageId': message.id,
@@ -121,6 +122,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'id': sender.get('id'),
             'username': sender.get('username'),
             'slug': sender.get('slug'),
+            'photo': sender.get('photo'),
         }
 
         if sender.get('first_name'):
