@@ -3,7 +3,9 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from .models import ChatRoom, Message
+import logging
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -33,6 +35,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f'chat_{self.room_id}'
 
+        logger.info(f"Authenticated user in scope: {self.scope['user']}")
 
         if self.scope['user'].is_anonymous:
             await self.close()
@@ -57,62 +60,58 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        message_data = json.loads(text_data)
-        sender_id = message_data.get('senderId')
-        message_content = message_data.get('message')
-        room_id = self.scope['url_route']['kwargs']['room_id']
+        try:
+            message_data = json.loads(text_data)
+            sender = self.scope['user']
+            message_content = message_data.get('message')
+            room_id = self.scope['url_route']['kwargs']['room_id']
 
-        room = await database_sync_to_async(get_chat_room)(room_id)
-        sender = await database_sync_to_async(get_user_by_id)(sender_id)
+            room = await get_chat_room(room_id)
 
-        message = Message(room=room, sender=sender, content=message_content)
-        await database_sync_to_async(message.save)()
+            message = await save_message(room, sender, message_content)
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat.message',
-                'message': message_content,
-                'senderId': sender_id,
-                'timestamp': message.created_at.isoformat(),
-                'messageId': message.id,
-                'file': message.file.url if message.file else None,
-            }
-        )
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat.message',
+                    'message': message_content,
+                    'sender': {
+                        'id': sender.id,
+                        'username': sender.username,
+                        'first_name': sender.first_name,
+                        'last_name': sender.last_name,
+                    },
+                    'timestamp': message.created_at.isoformat(),
+                    'messageId': message.id,
+                    'file': message.file.url if message.file else None,
+                }
+            )
+        except Exception as e:
+            logger.error(f"WebSocket  receive error: {e}")
+            await self.close()
 
     async def chat_message(self, event):
         message = event['message']
-        sender_id = event['senderId']
+        sender = event['sender']
         timestamp = event['timestamp']
         message_id = event['messageId']
         file_url = event['file']
 
-        sender = await database_sync_to_async(get_user_by_id)(sender_id)
+        sender_data = {
+            'id': sender.get('id'),
+            'username': sender.get('username'),
+        }
 
-        if sender:
-            sender_data = {
-                'id': sender.id,
-                'username': sender.username,
-            }
+        if sender.get('first_name'):
+            sender_data['first_name'] = sender['first_name']
+        if sender.get('last_name'):
+            sender_data['last_name'] = sender['last_name']
 
-            if sender.last_name:
-                sender_data['last_name'] = sender.last_name
-            if sender.first_name:
-                sender_data['first_name'] = sender.first_name
-
-            await self.send(text_data=json.dumps({
-                'message': message,
-                'sender': sender_data,
-                'timestamp': timestamp,
-                'messageId': message_id,
-                'file': file_url,
-            }))
-        else:
-            await self.send(text_data=json.dumps({
-                'message': message,
-                'senderId': sender_id,
-                'timestamp': timestamp,
-                'messageId': message_id,
-                'file': file_url,
-            }))
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'sender': sender_data,
+            'timestamp': timestamp,
+            'messageId': message_id,
+            'file': file_url,
+        }))
 
