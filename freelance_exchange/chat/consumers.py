@@ -37,8 +37,7 @@ def mark_message_as_read(message_id):
         if not message.is_read:
             message.is_read = True
             message.save()
-            return True
-        return False
+        return message.is_read
     except Message.DoesNotExist:
         return False
 
@@ -99,9 +98,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'timestamp': message.created_at.isoformat(),
                     'messageId': message.id,
                     'file': message.file.url if message.file else None,
-                    'is_read': False
+                    'is_read': False,
+                    'room_id': room_id
                 }
             )
+
+            recipient_user = room.participants.exclude(id=sender.id).first()
+            if recipient_user:
+                await self.channel_layer.group_send(
+                    f"user_{recipient_user.id}",
+                    {
+                        "type": "new_message_notification",
+                        "room_id": room.id,
+                        "message": message.content,
+                        "timestamp": message.created_at.isoformat(),
+                        "messageId": message.id,
+                        "sender_id": sender.id,
+                        "sender_username": sender.username,
+                        "sender_slug": sender.slug,
+                        "sender_first_name": sender.first_name,
+                        "sender_last_name": sender.last_name,
+                        "sender_photo": sender.photo.url if sender.photo else None,
+                    }
+                )
+
         except Exception as e:
             logger.error(f"WebSocket  receive error: {e}")
             await self.close()
@@ -112,6 +132,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         timestamp = event['timestamp']
         message_id = event['messageId']
         file_url = event['file']
+        room_id = event.get('room_id')
 
         current_user = self.scope['user']
         is_read = False
@@ -136,6 +157,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp,
             'messageId': message_id,
             'file': file_url,
+            'room_id': room_id,
             'is_read': is_read,
         }))
 
@@ -164,10 +186,26 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         )
 
     async def new_message_notification(self, event):
+
+        sender = {
+            'id': event.get('sender_id'),
+            'username': event.get('sender_username'),
+            'slug': event.get('sender_slug'),
+            'photo': event.get('sender_photo'),
+        }
+
+        if event.get('sender_first_name'):
+            sender['first_name'] = event['sender_first_name']
+        if event.get('sender_last_name'):
+            sender['last_name'] = event['sender_last_name']
+
         await self.send(text_data=json.dumps({
             "type": "notification",
             "chat_id": event["chat_id"],
+            "room_id": event.get("room_id"),
+            "messageId": event.get("messageId"),
             "message_preview": event["message"],
-            "sender_username": event["sender_username"],
+            "sender": sender,
             "timestamp": event["timestamp"],
+            "is_read": False
         }))
