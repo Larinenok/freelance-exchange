@@ -34,10 +34,13 @@ def save_message(room, sender, content):
 def mark_message_as_read(message_id):
     try:
         message = Message.objects.get(id=message_id)
-        message.is_read = True
-        message.save()
+        if not message.is_read:
+            message.is_read = True
+            message.save()
+            return True
+        return False
     except Message.DoesNotExist:
-        pass
+        return False
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -90,10 +93,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'username': sender.username,
                         'first_name': sender.first_name,
                         'last_name': sender.last_name,
+                        'slug': sender.slug,
                     },
                     'timestamp': message.created_at.isoformat(),
                     'messageId': message.id,
                     'file': message.file.url if message.file else None,
+                    'is_read': False
                 }
             )
         except Exception as e:
@@ -108,12 +113,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         file_url = event['file']
 
         current_user = self.scope['user']
+        is_read = False
         if current_user.id != sender['id']:
-            await mark_message_as_read(message_id)
+            is_read = await mark_message_as_read(message_id)
 
         sender_data = {
             'id': sender.get('id'),
             'username': sender.get('username'),
+            'slug': sender.get('slug'),
         }
 
         if sender.get('first_name'):
@@ -127,6 +134,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp,
             'messageId': message_id,
             'file': file_url,
+            'is_read': is_read,
         }))
 
 
