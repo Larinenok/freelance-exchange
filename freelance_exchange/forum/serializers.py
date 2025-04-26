@@ -6,7 +6,7 @@ from users.models import CustomUser
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'first_name', 'last_name', 'photo')
+        fields = ('id', 'username', 'first_name', 'last_name', 'photo', 'slug')
         ref_name = "ForumCustomUser"
 
 
