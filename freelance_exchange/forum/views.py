@@ -11,7 +11,7 @@ from .serializers import DiscussionSerializer, DiscussionCreateSerializer, Comme
 class DiscussionListView(generics.ListAPIView):
     queryset = Discussion.objects.all()
     serializer_class = DiscussionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
 
 class DiscussionCreateView(generics.CreateAPIView):
@@ -25,7 +25,11 @@ class DiscussionCreateView(generics.CreateAPIView):
 class DiscussionDetailView(generics.RetrieveAPIView):
     queryset = Discussion.objects.all()
     serializer_class = DiscussionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
 
 class CommentCreateView(generics.CreateAPIView):
@@ -40,7 +44,7 @@ class CommentCreateView(generics.CreateAPIView):
 
 class CommentListView(generics.ListAPIView):
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         discussion_id = self.kwargs.get('discussion_id')
