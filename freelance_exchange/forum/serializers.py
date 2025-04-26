@@ -31,7 +31,7 @@ class DiscussionSerializer(serializers.ModelSerializer):
 class DiscussionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Discussion
-        fields = ('title', 'description', 'file', 'status')
+        fields = ('title', 'description', 'file')
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
