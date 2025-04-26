@@ -110,8 +110,24 @@ class AdListCreateView(generics.ListCreateAPIView):
 
 
 class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Ad.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Ad.objects.all()
+
+        user = self.request.user
+        if user.is_authenticated:
+            blocked_by_users = BlackList.objects.filter(blocked_user=user).values_list('owner', flat=True)
+            blocked_users = BlackList.objects.filter(owner=user).values_list('blocked_user', flat=True)
+
+            queryset = queryset.exclude(author__id__in=blocked_by_users)
+            queryset = queryset.exclude(author__id__in=blocked_users)
+
+            chat_subquery = ChatRoom.objects.filter(ad=OuterRef('pk'), participants=user).values('id')[:1]
+            queryset = queryset.annotate(room_id=Subquery(chat_subquery, output_field=IntegerField()))
+
+        return queryset.select_related('author', 'executor') \
+            .prefetch_related('type', 'category', 'files', 'responders', 'chat_rooms')
 
     def get_serializer_class(self):
         if self.request.method != 'GET':
@@ -125,20 +141,6 @@ class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         ad = super().get_object()
-        user = self.request.user
-
-        if user.is_authenticated:
-            blocked_by_users = BlackList.objects.filter(blocked_user=user).values_list('owner', flat=True)
-
-            blocked_users = BlackList.objects.filter(owner=user).values_list('blocked_user', flat=True)
-
-            if ad.author.id in blocked_by_users or ad.author.id in blocked_users:
-                Response({"error": "Вы не можете просматривать это объявление."}, status=status.HTTP_403_FORBIDDEN)
-
-        chat_subquery = ChatRoom.objects.filter(ad=OuterRef('pk'), participants=user).values('id')[:1]
-
-        ad = ad.annotate(room_id=Subquery(chat_subquery, output_field=IntegerField()))
-
         return ad
 
 
