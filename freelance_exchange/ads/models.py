@@ -3,6 +3,7 @@ from users.models import CustomUser
 from pytils.translit import slugify
 import os.path
 
+
 class Types(models.Model):
     name = models.CharField(max_length=255, verbose_name='Виды')
 
@@ -66,6 +67,7 @@ class Ad(models.Model):
         if not self.slug:
             self.slug = slugify(self.title)
         super(Ad, self).save(*args, **kwargs)
+
 
 class AdResponse(models.Model):
     ad = models.ForeignKey(Ad, on_delete=models.CASCADE, verbose_name='Объявление')

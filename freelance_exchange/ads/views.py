@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, permissions
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
@@ -11,6 +12,8 @@ from pytils.translit import slugify
 from .models import Ad, AdFile, AdResponse
 from .serializers import *
 from chat.models import ChatRoom
+from users.models import BlackList
+from django.db.models import Subquery, OuterRef, IntegerField, Q
 
 
 class TypeChangeView(generics.ListAPIView):
@@ -73,7 +76,24 @@ class CreateCategoriesView(generics.ListCreateAPIView):
 
 
 class AdListCreateView(generics.ListCreateAPIView):
-    queryset = Ad.objects.all()
+    def get_queryset(self):
+        queryset = Ad.objects.exclude(status=Ad.CLOSED)
+
+        user = self.request.user
+        if user.is_authenticated:
+            blocked_by_users = BlackList.objects.filter(blocked_user=user).values_list('owner', flat=True)
+
+            blocked_users = BlackList.objects.filter(owner=user).values_list('blocked_user', flat=True)
+
+            queryset = queryset.exclude(author__id__in=blocked_by_users)
+            queryset = queryset.exclude(author__id__in=blocked_users)
+
+            chat_subquery = ChatRoom.objects.filter(ad=OuterRef('pk'), participants=user).values('id')[:1]
+
+            queryset = queryset.annotate(room_id=Subquery(chat_subquery, output_field=IntegerField()))
+
+        return queryset.select_related('author', 'executor') \
+            .prefetch_related('type', 'category', 'files', 'responders', 'chat_rooms')
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -103,8 +123,24 @@ class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
-    # def perform_update(self, serializer):
-    #     serializer.save(slug=slugify(serializer.validated_data['title']))
+    def get_object(self):
+        ad = super().get_object()
+        user = self.request.user
+
+        if user.is_authenticated:
+            blocked_by_users = BlackList.objects.filter(blocked_user=user).values_list('owner', flat=True)
+
+            blocked_users = BlackList.objects.filter(owner=user).values_list('blocked_user', flat=True)
+
+            if ad.author.id in blocked_by_users or ad.author.id in blocked_users:
+                Response({"error": "Вы не можете просматривать это объявление."}, status=status.HTTP_403_FORBIDDEN)
+
+        chat_subquery = ChatRoom.objects.filter(ad=OuterRef('pk'), participants=user).values('id')[:1]
+
+        ad = ad.annotate(room_id=Subquery(chat_subquery, output_field=IntegerField()))
+
+        return ad
+
 
 class AdFileUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -327,3 +363,28 @@ class GetResponsesView(APIView):
         responses = AdResponse.objects.filter(ad=ad)
         serializer = AdResponseSerializer(responses, many=True)
         return Response({'responses': serializer.data}, status=status.HTTP_200_OK)
+
+
+class MyWorkListView(generics.ListAPIView):
+    serializer_class = AdGetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Ad.objects.filter(executor=user, status=Ad.IN_PROGRESS).order_by('-deadlineEndAt')
+
+
+class CustomerArchiveView(generics.ListAPIView):
+    serializer_class = AdGetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Ad.objects.filter(author=self.request.user, status=Ad.CLOSED).order_by('-closed_date')
+
+
+class ExecutorArchiveView(generics.ListAPIView):
+    serializer_class = AdGetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Ad.objects.filter(executor=self.request.user,status=Ad.CLOSED).order_by('-closed_date')

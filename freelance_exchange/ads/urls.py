@@ -17,6 +17,9 @@ from .views import (
     CreateTypesView,
     CreateCategoriesView,
     CategoryChangeView,
+    MyWorkListView,
+    CustomerArchiveView,
+    ExecutorArchiveView,
 )
 
 urlpatterns = [
@@ -37,4 +40,7 @@ urlpatterns = [
     path('types_change/', TypeChangeView.as_view(), name='types-change'),
     path('categories_create/', CreateCategoriesView.as_view(), name='categories-create'),
     path('categories_change/', CategoryChangeView.as_view(), name='categories-change'),
+    path('my_work/', MyWorkListView.as_view(), name='my_work'),
+    path('archive/customer/', CustomerArchiveView.as_view(), name='customer-archive'),
+    path('archive/executor/', ExecutorArchiveView.as_view(), name='executor-archive'),
 ]

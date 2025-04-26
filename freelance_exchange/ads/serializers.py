@@ -108,6 +108,7 @@ class AdGetSerializer(serializers.ModelSerializer):
     files = serializers.PrimaryKeyRelatedField(queryset=AdFile.objects.all(), many=True, required=False)
     type = serializers.StringRelatedField(many=True)
     category = serializers.StringRelatedField(many=True)
+    room_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Ad
@@ -115,8 +116,14 @@ class AdGetSerializer(serializers.ModelSerializer):
             'id', 'executor', 'orderNumber', 'responders', 'title',
             'type', 'category', 'status', 'deadlineStartAt',
             'deadlineEndAt', 'budget', 'description',
-            'author', 'files',
+            'author', 'files', 'room_id',
         )
+
+    def get_room_id(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated and (obj.author == user or obj.executor == user):
+            return getattr(obj, 'room_id', None)
+        return None
 
 class AdFileUploadSerializer(serializers.ModelSerializer):
     files = serializers.ListField(child=serializers.FileField(), required=True)

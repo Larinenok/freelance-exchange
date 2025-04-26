@@ -78,6 +78,7 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
         model = PortfolioItem
         fields = (
             'id',
+            'user',
             'title',
             'description',
             'file',
