@@ -9,7 +9,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import ValidationError, AuthenticationFailed, PermissionDenied
+from rest_framework.exceptions import ValidationError, AuthenticationFailed, PermissionDenied, NotAuthenticated
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView, RetrieveAPIView, \
     CreateAPIView, ListCreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -342,6 +342,8 @@ class PortfolioItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            raise NotAuthenticated("Пользователь не аутентифицирован")
         return PortfolioItem.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
