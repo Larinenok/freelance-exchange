@@ -1,5 +1,16 @@
 from django.db import models
 from django.conf import settings
+import uuid
+import os
+from django.utils.text import slugify
+
+
+def discussion_file_upload_path(instanse, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    slug = slugify(instanse.title)
+    path = f"forum/{slug}/{filename}"
+    return path
 
 
 class Discussion(models.Model):
@@ -10,7 +21,7 @@ class Discussion(models.Model):
 
     title = models.CharField(max_length=255, verbose_name='Название')
     description = models.TextField(verbose_name='Описание')
-    file = models.FileField(upload_to='discussion_files/', blank=True, null=True, verbose_name='Прикрепленный файл')
+    file = models.FileField(upload_to=discussion_file_upload_path, blank=True, null=True, verbose_name='Прикрепленный файл')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Время создания обсуждения')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open', verbose_name='Статус')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='discussions', verbose_name='Автор обсуждения')

@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 logger = logging.getLogger(__name__)
 
+
 def user_photo_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"

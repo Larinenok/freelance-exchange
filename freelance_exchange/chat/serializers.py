@@ -1,3 +1,8 @@
+import uuid
+
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.utils.text import slugify
 from rest_framework import serializers
 from .models import ChatRoom, Message
 from users.models import CustomUser
@@ -68,7 +73,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 class MessageCreateSerializer(serializers.ModelSerializer):
     content = serializers.CharField()
-    file = serializers.FileField(required=False)
+    file = serializers.FileField(required=False, allow_null=True)
 
     class Meta:
         model = Message
@@ -83,11 +88,31 @@ class MessageCreateSerializer(serializers.ModelSerializer):
         except ChatRoom.DoesNotExist:
             raise serializers.ValidationError("Комната чата не найдена.")
 
+        content = validated_data.get('content', '')
+        file = validated_data.pop('file', None)
+
         message = Message.objects.create(
             sender=sender,
             room=room,
-            **validated_data
+            content=content
         )
+
+        if file:
+            old_path = file.name
+            ext = old_path.split('.')[-1]
+            ad_title = message.room.ad.title if message.room and message.room.ad else 'untitled'
+            slug = slugify(ad_title)
+            filename = f"{uuid.uuid4()}.{ext}"
+            new_path = f"chat_files/{slug}/{filename}"
+
+            if default_storage.exists(old_path):
+                with default_storage.open(old_path, 'rb') as old_file:
+                    default_storage.save(new_path, ContentFile(old_file.read()))
+                default_storage.delete(old_path)
+
+                message.file.name = new_path
+                message.save()
+
         return message
 
 
