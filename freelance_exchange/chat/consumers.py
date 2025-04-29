@@ -141,7 +141,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'chat.message',
-                    'message': message_content,
+                    'message': content,
                     'sender': sender_data,
                     'timestamp': message.created_at.isoformat(),
                     'messageId': message.id,

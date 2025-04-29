@@ -342,6 +342,9 @@ class PortfolioItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return PortfolioItem.objects.none()
+
         if not self.request.user.is_authenticated:
             raise NotAuthenticated("Пользователь не аутентифицирован")
         return PortfolioItem.objects.filter(user=self.request.user)
