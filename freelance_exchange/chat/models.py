@@ -1,6 +1,6 @@
 import os
 import uuid
-from django.utils.text import slugify
+from pytils.translit import slugify
 from django.db import models
 from django.conf import settings
 
@@ -22,8 +22,8 @@ class ChatRoom(models.Model):
 def chat_file_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
-    ad_title = instance.room.ad.title if instance.room and instance.room.ad else 'untitled'
-    slug = slugify(ad_title)
+    ad_slug = getattr(instance.room.ad, 'slug', None)
+    slug = ad_slug or 'untitled'
     path = f"chat_files/{slug}/{filename}"
     return path
 

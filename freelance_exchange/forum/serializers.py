@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.utils.text import slugify
 from rest_framework import serializers
-from .models import Discussion, Comment
+from .models import Discussion, Comment, comment_file_upload_path, discussion_file_upload_path, UploadedFileScan
 from users.models import CustomUser
 
 
@@ -20,7 +20,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('id', 'content', 'author', 'created_at')
+        fields = ('id', 'content', 'author', 'created_at', 'file')
 
 
 class DiscussionSerializer(serializers.ModelSerializer):
@@ -30,10 +30,12 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Discussion
-        fields = ('id', 'title', 'description', 'file', 'created_at', 'status', 'author', 'comments', 'resolved_comment')
+        fields = ('id', 'title', 'slug', 'description', 'file', 'created_at', 'status', 'author', 'comments', 'resolved_comment')
 
 
 class DiscussionCreateSerializer(serializers.ModelSerializer):
+    file = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = Discussion
         fields = ('title', 'description', 'file')
@@ -41,35 +43,61 @@ class DiscussionCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         title = validated_data.get('title')
-        slug = slugify(title)
-        file = validated_data.pop('file', None)
+        description = validated_data.get('description')
+        file_path = validated_data.pop('file', None)
 
         discussion = Discussion.objects.create(
             author=user,
             title=title,
-            description=validated_data.get('description', '')
+            description=description
         )
+        discussion.save()
 
-        if file:
-            old_path = file.name
-            ext = old_path.split('.')[-1]
-            filename = f"{uuid.uuid4()}.{ext}"
-            new_path = f"forum/{slug}/{filename}"
+        if file_path:
+            if default_storage.exists(file_path):
+                with default_storage.open(file_path, 'rb') as old_file:
+                    content = old_file.read()
+                ext = file_path.split('.')[-1]
+                filename = f"{uuid.uuid4()}.{ext}"
 
-            if default_storage.exists(old_path):
-                with default_storage.open(old_path, 'rb') as old_file:
-                    default_storage.save(new_path, ContentFile(old_file.read()))
-                default_storage.delete(old_path)
+                discussion.file.save(filename, ContentFile(content))
 
-                discussion.file.name = new_path
-                discussion.save()
+                default_storage.delete(file_path)
 
         return discussion
 
+
 class CommentCreateSerializer(serializers.ModelSerializer):
+    file = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = Comment
-        fields = ('content', )
+        fields = ('content', 'file')
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        discussion = self.context['discussion']
+
+        file_path = validated_data.pop('file', None)
+
+        comment = Comment.objects.create(
+            author=user,
+            discussion=discussion,
+            content=validated_data.get('content', '')
+        )
+
+        if file_path:
+            if default_storage.exists(file_path):
+                with default_storage.open(file_path, 'rb') as old_file:
+                    content = old_file.read()
+                ext = file_path.split('.')[-1]
+                filename = f"{uuid.uuid4()}.{ext}"
+
+                comment.file.save(filename, ContentFile(content))
+
+                default_storage.delete(file_path)
+
+        return comment
 
 
 class DiscussionUpdateStatusSerializer(serializers.ModelSerializer):
@@ -112,6 +140,20 @@ class DiscussionMarkCommentSerializer(serializers.ModelSerializer):
 
 class FileUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
-    type = serializers.type = serializers.ChoiceField(choices=['chat', 'discussion'], required=True)
+    type = serializers.type = serializers.ChoiceField(choices=['chat', 'discussion', 'comment'], required=True)
+
+
+class UploadedFileScanSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UploadedFileScan
+        fields = ['id', 'status', 'file_path', 'file_url', 'was_deleted']
+
+
+    def get_file_url(self, obj):
+        if obj.was_deleted:
+            return None
+        return default_storage.url(obj.file_path)
 
 

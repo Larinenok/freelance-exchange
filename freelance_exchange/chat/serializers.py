@@ -19,7 +19,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     sender = CustomUserSerializer()
     room = serializers.PrimaryKeyRelatedField(queryset=ChatRoom.objects.all())
-    file = serializers.FileField(use_url=True)
+    file = serializers.FileField(use_url=True, required=False)
 
     class Meta:
         model = Message
@@ -73,7 +73,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 class MessageCreateSerializer(serializers.ModelSerializer):
     content = serializers.CharField()
-    file = serializers.FileField(required=False, allow_null=True)
+    file = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Message
@@ -89,29 +89,24 @@ class MessageCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Комната чата не найдена.")
 
         content = validated_data.get('content', '')
-        file = validated_data.pop('file', None)
+        file_path = validated_data.pop('file', None)
 
         message = Message.objects.create(
             sender=sender,
             room=room,
             content=content
         )
+        message.save()
 
-        if file:
-            old_path = file.name
-            ext = old_path.split('.')[-1]
-            ad_title = message.room.ad.title if message.room and message.room.ad else 'untitled'
-            slug = slugify(ad_title)
+        if file_path and default_storage.exists(file_path):
+            with default_storage.open(file_path, 'rb') as old_file:
+                file_content = old_file.read()
+
+            ext = file_path.split('.')[-1]
             filename = f"{uuid.uuid4()}.{ext}"
-            new_path = f"chat_files/{slug}/{filename}"
+            message.file.save(filename, ContentFile(file_content))
 
-            if default_storage.exists(old_path):
-                with default_storage.open(old_path, 'rb') as old_file:
-                    default_storage.save(new_path, ContentFile(old_file.read()))
-                default_storage.delete(old_path)
-
-                message.file.name = new_path
-                message.save()
+            default_storage.delete(file_path)
 
         return message
 

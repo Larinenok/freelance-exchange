@@ -1,3 +1,4 @@
+import time
 import uuid
 import logging
 import requests
@@ -12,12 +13,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from .models import Discussion, Comment
+from .models import Discussion, Comment, UploadedFileScan
 from .serializers import DiscussionSerializer, DiscussionCreateSerializer, CommentSerializer, CommentCreateSerializer, \
-    DiscussionUpdateStatusSerializer, DiscussionMarkCommentSerializer, FileUploadSerializer
+    DiscussionUpdateStatusSerializer, DiscussionMarkCommentSerializer, FileUploadSerializer, UploadedFileScanSerializer
+from users.tasks import start_file_scan_virustotal
 
 
 logger = logging.getLogger(__name__)
+
 
 class DiscussionListView(generics.ListAPIView):
     queryset = Discussion.objects.all()
@@ -47,10 +50,20 @@ class CommentCreateView(generics.CreateAPIView):
     serializer_class = CommentCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(request_body=CommentCreateSerializer)
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         discussion_id = self.kwargs.get('discussion_id')
         discussion = generics.get_object_or_404(Discussion, id=discussion_id)
-        serializer.save(author=self.request.user, discussion=discussion)
+        serializer.save()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        discussion_id = self.kwargs.get('discussion_id')
+        context['discussion'] = generics.get_object_or_404(Discussion, id=discussion_id)
+        return context
 
 
 class CommentListView(generics.ListAPIView):
@@ -103,7 +116,7 @@ class FileUploadView(generics.CreateAPIView):
 
     VIRUSTOTAL_API_KEY = config('API_KEY_VISUALTOTAL')
 
-    MAX_FILE_SIZE = 32 * 1024 * 1024
+    SAFE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'pptx', 'xlsx', 'pdf']
 
     @swagger_auto_schema(
         request_body=FileUploadSerializer,
@@ -117,96 +130,46 @@ class FileUploadView(generics.CreateAPIView):
         if not file or not upload_type:
             return Response({'error': 'Файл или тип не переданы.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        ext = file.name.split('.')[-1]
+        ext = file.name.split('.')[-1].lower()
         filename = f"{uuid.uuid4()}.{ext}"
 
         if upload_type == "chat":
             path = f"temp_upload/chat_files/{filename}"
         elif upload_type == "discussion":
             path = f"temp_upload/forum/{filename}"
+        elif upload_type == "comment":
+            path = f"temp_upload/forum/comment/{filename}"
         else:
             return Response({'error': "Неверный тип загрузки."}, status=status.HTTP_400_BAD_REQUEST)
 
         saved_path = default_storage.save(path, ContentFile(file.read()))
         file_url = default_storage.url(saved_path)
 
-        if file.size > self.MAX_FILE_SIZE:
-            safety_check_result = self.check_file_safety_with_url(file_url)
-            if safety_check_result:
-                return Response({'file_url': file_url, 'status': 'File is safe'}, status=status.HTTP_201_CREATED)
-            else:
-                default_storage.delete(saved_path)
-                return Response({'error': 'File is dangerous'}, status=status.HTTP_400_BAD_REQUEST)
+        if ext in self.SAFE_EXTENSIONS:
+            scan = UploadedFileScan.objects.create(
+                file_path=saved_path,
+                status="safe",
+                was_deleted=False
+            )
         else:
-            if self.check_file_safety(file):
-                return Response({'file_url': file_url, 'status': 'File is safe'}, status=status.HTTP_201_CREATED)
-            else:
-                default_storage.delete(saved_path)
-                return Response({'error': 'File is dangerous'}, status=status.HTTP_400_BAD_REQUEST)
+            scan = UploadedFileScan.objects.create(
+                file_path=saved_path,
+                status="pending"
+            )
 
-    def check_file_safety(self, file):
-        url = "https://www.virustotal.com/api/v3/files"
-        headers = {
-            "accept": "application/json",
-            "x-apikey": self.VIRUSTOTAL_API_KEY,
-        }
+            start_file_scan_virustotal.delay(scan.id, file.name, saved_path)
 
-        logger.info(f"Отправка файла {file.name} на VirusTotal...")
+        if scan.was_deleted:
+            file_url = None
 
-        files = {'file': (file.name, file, file.content_type)}
+        return Response({
+            'file_url': file_url,
+            'file_path': saved_path,
+            'scan_status': scan.status,
+            'scan_id': scan.id,
+            'was_deleted': scan.was_deleted
+        }, status=status.HTTP_201_CREATED)
 
-        response = requests.post(url, headers=headers, files=files)
-
-        logger.info(f"Ответ от VirusTotal: {response.status_code}, {response.text}")
-
-        if response.status_code == 200:
-            result = response.json()
-            analysis_id = result.get("data", {}).get("id")
-            return self.check_analysis_status(analysis_id)
-        else:
-            logger.error(f"Ошибка при отправке файла: {response.status_code}, {response.text}")
-            return False
-
-    def check_file_safety_with_url(self, file_url):
-        url = "https://www.virustotal.com/api/v3/files/upload_url"
-        headers = {
-            "accept": "application/json",
-            "x-apikey": self.VIRUSTOTAL_API_KEY,
-        }
-
-        data = {'url': file_url}
-
-        response = requests.post(url, headers=headers, json=data)
-
-        if response.status_code == 200:
-            result = response.json()
-            analysis_id = result.get("data", {}).get("id")
-            return self.check_analysis_status(analysis_id)
-        else:
-            return False
-
-    def check_analysis_status(self, analysis_id):
-        url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
-        headers = {
-            "accept": "application/json",
-            "x-apikey": self.VIRUSTOTAL_API_KEY,
-        }
-
-        response = requests.get(url, headers=headers)
-
-        if response.status_code == 200:
-            result = response.json()
-            attributes = result.get("data", {}).get("attributes", {})
-            if attributes.get("status") == "completed":
-                stats = attributes.get("stats", {})
-                if stats.get("malicious", 0) > 0:
-                    return False
-                else:
-                    return True
-            else:
-                return False
-        else:
-            return False
 
 class FileDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -228,3 +191,10 @@ class FileDeleteView(generics.DestroyAPIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FileScanStatusView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UploadedFileScan.objects.all()
+    serializer_class = UploadedFileScanSerializer
+    lookup_field = 'id'

@@ -23,11 +23,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelance_exchange.settings')
 django_asgi_app = get_asgi_application()
 
 from chat.middleware import CustomJWTAuthMiddleware
-from chat.consumers import ChatConsumer, NotificationConsumer
+from chat.consumers import ChatConsumer, NotificationConsumer, FileScanConsumer
 
 websocket_urlpatterns = [
     re_path(r'ws/chat/(?P<room_id>\d+)/$', ChatConsumer.as_asgi()),
     re_path(r'ws/notification/$', NotificationConsumer.as_asgi()),
+    re_path(r'ws/scan/(?P<scan_id>\d+)/$', FileScanConsumer.as_asgi()),
 ]
 
 application = ProtocolTypeRouter({

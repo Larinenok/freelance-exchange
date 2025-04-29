@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import DiscussionListView, DiscussionCreateView, DiscussionDetailView, CommentCreateView, CommentListView, \
-    DiscussionUpdateStatusView, DiscussionMarkCommentView, FileUploadView, FileDeleteView
+    DiscussionUpdateStatusView, DiscussionMarkCommentView, FileUploadView, FileDeleteView, FileScanStatusView
 
 urlpatterns = [
     path('list/', DiscussionListView.as_view(), name='discussion-list'),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('<int:discussion_id>/comments/create/', CommentCreateView.as_view(), name='comment-create'),
     path('file/upload/', FileUploadView.as_view(), name='file-upload'),
     path('file/delete/', FileDeleteView.as_view(), name='file-delete'),
+    path('file-scan-status/<int:scan_id>/', FileScanStatusView.as_view(), name='file_scan_status'),
 ]

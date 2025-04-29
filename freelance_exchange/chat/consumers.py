@@ -1,7 +1,13 @@
+import uuid
+
 from django.contrib.auth import get_user_model
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+
 from .models import ChatRoom, Message
 import logging
 
@@ -26,8 +32,20 @@ def get_user_by_id(user_id):
 
 
 @database_sync_to_async
-def save_message(room, sender, content):
-    return Message.objects.create(room=room, sender=sender, content=content)
+def save_message(room, sender, content, file_path=None):
+    message = Message.objects.create(room=room, sender=sender, content=content)
+
+    if file_path and default_storage.exists(file_path):
+        with default_storage.open(file_path, 'rb') as temp_file:
+            file_data = temp_file.read()
+
+        ext = file_path.split('.')[-1]
+        filename = f"{uuid.uuid4()}.{ext}"
+
+        message.file.save(filename, ContentFile(file_data))
+        default_storage.delete(file_path)
+
+    return message
 
 
 @database_sync_to_async
@@ -100,7 +118,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             message_data = json.loads(text_data)
             sender = self.scope['user']
-            message_content = message_data.get('message')
             room_id = self.scope['url_route']['kwargs']['room_id']
 
             room = await get_chat_room(room_id)
@@ -108,7 +125,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
 
-            message = await save_message(room, sender, message_content)
+            if isinstance(message_data.get("message"), str):
+                content = message_data["message"]
+                file_path = None
+            else:
+                content = message_data["message"].get("content", "")
+                file_path = message_data["message"].get("file")
+
+            message = await save_message(room, sender, content, file_path)
 
             sender_data = await get_sender_data(sender)
             file_url = await get_file_url(message)
@@ -232,3 +256,29 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
         except Exception as e:
             logger.warning(f"Failed to send notification to WebSocket: {e}")
+
+
+class FileScanConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.scan_id = self.scope['url_route']['kwargs']['scan_id']
+        self.group_name = f'scan_{self.scan_id}'
+
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+
+    async def scan_status(self, event):
+        await self.send(text_data=json.dumps({
+            "status": event["status"],
+            "scan_id": event["scan_id"],
+            "was_deleted": event.get("was_deleted", False)
+        }))
