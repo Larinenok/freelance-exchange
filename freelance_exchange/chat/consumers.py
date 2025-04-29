@@ -35,17 +35,36 @@ def get_user_by_id(user_id):
 def save_message(room, sender, content, file_path=None):
     message = Message.objects.create(room=room, sender=sender, content=content)
 
-    logger.info(f"[save_message] Checking file path: {file_path}, exists: {default_storage.exists(file_path)}")
 
-    if file_path and default_storage.exists(file_path):
-        with default_storage.open(file_path, 'rb') as temp_file:
-            file_data = temp_file.read()
+    # if file_path and default_storage.exists(file_path):
+    #     with default_storage.open(file_path, 'rb') as temp_file:
+    #         file_data = temp_file.read()
+    #
+    #     ext = file_path.split('.')[-1]
+    #     filename = f"{uuid.uuid4()}.{ext}"
+    #
+    #     message.file.save(filename, ContentFile(file_data))
+    #     default_storage.delete(file_path)
 
-        ext = file_path.split('.')[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
+    if file_path:
+        try:
+            exists = default_storage.exists(file_path)
+            logger.info(f"[save_message] Checking file path: {file_path}, exists: {exists}")
+            if exists:
+                with default_storage.open(file_path, 'rb') as temp_file:
+                    file_data = temp_file.read()
 
-        message.file.save(filename, ContentFile(file_data))
-        default_storage.delete(file_path)
+                ext = file_path.split('.')[-1]
+                filename = f"{uuid.uuid4()}.{ext}"
+
+                message.file.save(filename, ContentFile(file_data))
+                default_storage.delete(file_path)
+            else:
+                logger.warning(f"[save_message] File does not exist: {file_path}")
+        except Exception as e:
+            logger.error(f"[save_message] Error while checking or processing file: {e}")
+    else:
+        logger.info("[save_message] No file_path provided.")
 
     return message
 
