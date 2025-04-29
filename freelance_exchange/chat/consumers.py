@@ -137,6 +137,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender_data = await get_sender_data(sender)
             file_url = await get_file_url(message)
 
+            logger.info(f"message.file: {message.file}")
+            logger.info(f"file_path: {file_path}")
+            logger.info(f"file url: {file_url}")
+
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
