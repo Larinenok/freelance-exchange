@@ -35,6 +35,8 @@ def get_user_by_id(user_id):
 def save_message(room, sender, content, file_path=None):
     message = Message.objects.create(room=room, sender=sender, content=content)
 
+    logger.info(f"[save_message] Checking file path: {file_path}, exists: {default_storage.exists(file_path)}")
+
     if file_path and default_storage.exists(file_path):
         with default_storage.open(file_path, 'rb') as temp_file:
             file_data = temp_file.read()
@@ -131,6 +133,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             else:
                 content = message_data["message"].get("content", "")
                 file_path = message_data["message"].get("file")
+
+            logger.info(f"Received file_path from client: {file_path}")
 
             message = await save_message(room, sender, content, file_path)
 

@@ -81,6 +81,9 @@ class DiscussionUpdateStatusView(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Discussion.objects.none()
+
         return Discussion.objects.filter(author=self.request.user)
 
 
