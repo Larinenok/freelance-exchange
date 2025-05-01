@@ -7,6 +7,12 @@ from users.models import CustomUser
 from ads.models import Ad
 
 
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'username', 'first_name', 'last_name', 'photo', 'slug')
+
+
 class InputStarsSerializer(serializers.Serializer):
     target_username = serializers.CharField(max_length=150)
 
@@ -18,13 +24,13 @@ class AdShortInfoSerializer(serializers.ModelSerializer):
 
 
 class ListStarInfo(serializers.ModelSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)
-    target_username = serializers.CharField(source='target.username', read_only=True)
+    author = CustomUserSerializer(read_only=True)
+    target = CustomUserSerializer(read_only=True)
     ad = AdShortInfoSerializer(read_only=True)
 
     class Meta:
         model = Star
-        fields = ('id', 'author_username', 'target_username', 'count', 'message', 'created_at', 'ad')
+        fields = ('id', 'author', 'target', 'count', 'message', 'created_at', 'ad')
 
 
 class ChangeStarSerializer(serializers.ModelSerializer):
@@ -81,3 +87,13 @@ class ChangeStarSerializer(serializers.ModelSerializer):
         )
         update_user_rating(target)
         return star
+
+
+class UserStatsSerializer(serializers.ModelSerializer):
+    average_rating = serializers.FloatField()
+    completed_ads_count = serializers.IntegerField()
+
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'username', 'first_name', 'last_name', 'slug', 'photo',
+                  'average_rating', 'completed_ads_count')

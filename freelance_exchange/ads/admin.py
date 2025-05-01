@@ -14,12 +14,12 @@ class AdResponseAdmin(admin.StackedInline):
 class AdAdmin(admin.ModelAdmin):
     model = Ad
     readonly_fields = ('id',)
-    list_display = ('title', 'author', 'status', 'deadlineStartAt', 'deadlineEndAt')
+    list_display = ('title', 'author', 'executor', 'status', 'deadlineStartAt', 'deadlineEndAt')
     search_fields = ('title', 'author__username', 'executor__username', 'orderNumber')
     list_filter = ('status', 'deadlineStartAt', 'deadlineEndAt', 'author')
     fieldsets = [
         ('Title/category', {'fields': ['title', 'category', 'slug', 'id']}),
-        ('Content', {'fields': ['description', 'budget']}),
+        ('Content', {'fields': ['description', 'budget', 'status']}),
         ('Author', {'fields': ['author', 'contact_info']}),
         ('Executor', {'fields': ['executor']}),
     ]

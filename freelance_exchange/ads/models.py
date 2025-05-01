@@ -48,11 +48,13 @@ class Ad(models.Model):
     OPEN = 'open'
     CLOSED = 'closed'
     IN_PROGRESS = 'in_progress'
+    COMPLETED = 'completed'
 
     STATUS_CHOICES = [
-        (OPEN, 'Открытое'),
-        (CLOSED, 'Закрытое'),
+        (OPEN, 'Открыто'),
         (IN_PROGRESS, 'Выполняется'),
+        (COMPLETED, 'Выполнено'),
+        (CLOSED, 'Закрыто'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=OPEN, verbose_name='Статус')
 

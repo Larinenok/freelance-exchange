@@ -93,6 +93,7 @@ class DetailUserProfile(serializers.ModelSerializer):
     portfolio_items = PortfolioItemSerializer(many=True, read_only=True)
     stars = serializers.SerializerMethodField()
     ratings = serializers.SerializerMethodField()
+    completed_ads_count = serializers.SerializerMethodField()
 
     def get_stars(self, obj):
         return round(obj.stars or 0, 2)
@@ -100,6 +101,9 @@ class DetailUserProfile(serializers.ModelSerializer):
     def get_ratings(self, obj):
         ratings = Star.objects.filter(target=obj)
         return ListStarInfo(ratings, many=True).data
+
+    def get_completed_ads_count(self, obj):
+        return obj.ads_executor.filter(status='completed').count()
 
     class Meta:
         model = CustomUser
@@ -124,6 +128,7 @@ class DetailUserProfile(serializers.ModelSerializer):
             'stars',
             'ratings',
             'portfolio_items',
+            'completed_ads_count',
         )
 
 

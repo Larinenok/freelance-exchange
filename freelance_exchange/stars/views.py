@@ -1,3 +1,4 @@
+from django.db.models import Avg, Count, Q
 from drf_yasg import openapi
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveDestroyAPIView
@@ -11,6 +12,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions
 from .serializers import *
 from users.models import CustomUser
+from ads.models import Ad
 
 
 class APIStar(ListAPIView):
@@ -71,5 +73,23 @@ class StarRetrieveDestroyAPIView(RetrieveDestroyAPIView):
         response = super().delete(request, *args, **kwargs)
         update_user_rating(star.target)
         return response
+
+
+class UserStatsView(ListAPIView):
+    serializer_class = UserStatsSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return CustomUser.objects.annotate(
+            average_rating=Avg('received_ratings__count'),
+            completed_ads_count=Count(
+                'ads_executor',
+                filter=Q(ads_executor__status=Ad.COMPLETED),
+                distinct=True
+            )
+        ).filter(
+            average_rating__isnull=False,
+            completed_ads_count__gt=0
+        ).order_by('-completed_ads_count', '-average_rating')
 
 

@@ -77,7 +77,7 @@ class CreateCategoriesView(generics.ListCreateAPIView):
 
 class AdListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
-        queryset = Ad.objects.exclude(status=Ad.CLOSED)
+        queryset = Ad.objects.exclude(status__in=[Ad.CLOSED, Ad.COMPLETED])
 
         user = self.request.user
         if user.is_authenticated:
@@ -381,7 +381,7 @@ class CustomerArchiveView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Ad.objects.filter(author=self.request.user, status=Ad.CLOSED).order_by('-closed_date')
+        return Ad.objects.filter(author=self.request.user, status__in=[Ad.CLOSED, Ad.COMPLETED]).order_by('-closed_date')
 
 
 class ExecutorArchiveView(generics.ListAPIView):
@@ -389,4 +389,21 @@ class ExecutorArchiveView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Ad.objects.filter(executor=self.request.user,status=Ad.CLOSED).order_by('-closed_date')
+        return Ad.objects.filter(executor=self.request.user, status__in=[Ad.CLOSED, Ad.COMPLETED]).order_by('-closed_date')
+
+
+class CompletedAdsView(generics.ListAPIView):
+    serializer_class = AdCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Ad.objects.filter(executor=self.request.user, status=Ad.COMPLETED)
+
+
+class ExecutorStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        count = Ad.objects.filter(executor=request.user, status=Ad.COMPLETED).count()
+        return Response({"completed_ads_count": count})
+
