@@ -7,7 +7,7 @@ import json
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-
+import mimetypes
 from .models import ChatRoom, Message
 import logging
 
@@ -35,17 +35,6 @@ def get_user_by_id(user_id):
 def save_message(room, sender, content, file_path=None):
     message = Message.objects.create(room=room, sender=sender, content=content)
 
-
-    # if file_path and default_storage.exists(file_path):
-    #     with default_storage.open(file_path, 'rb') as temp_file:
-    #         file_data = temp_file.read()
-    #
-    #     ext = file_path.split('.')[-1]
-    #     filename = f"{uuid.uuid4()}.{ext}"
-    #
-    #     message.file.save(filename, ContentFile(file_data))
-    #     default_storage.delete(file_path)
-
     if file_path:
         try:
             exists = default_storage.exists(file_path)
@@ -59,6 +48,7 @@ def save_message(room, sender, content, file_path=None):
 
                 message.file.save(filename, ContentFile(file_data))
                 default_storage.delete(file_path)
+
             else:
                 logger.warning(f"[save_message] File does not exist: {file_path}")
         except Exception as e:
@@ -146,14 +136,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
 
-            # if isinstance(message_data.get("message"), str):
-            #     content = message_data["message"]
-            #     file_path = None
-            # else:
-            #     content = message_data["message"].get("content", "")
-            #     file_path = message_data["message"].get("file")
             content = message_data.get("message", "")
             file_path = message_data.get("file")
+            original_filename = message_data.get("original_name")
+            mime_type = message_data.get("mime_type")
 
             logger.info(f"Received content from client: {content}")
             logger.info(f"Received file_path from client: {file_path}")
@@ -176,6 +162,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'timestamp': message.created_at.isoformat(),
                     'messageId': message.id,
                     'file': file_url,
+                    'original_filename': original_filename,
+                    'mime_type': mime_type,
                     'is_read': False,
                     'room_id': room_id
                 }
@@ -215,6 +203,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message_id = event['messageId']
             file_url = event['file']
             room_id = event.get('room_id')
+            original_filename = event.get('original_filename')
+            mime_type = event.get('mime_type')
 
             current_user = self.scope['user']
             is_read = False
@@ -227,6 +217,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'timestamp': timestamp,
                 'messageId': message_id,
                 'file': file_url,
+                'original_filename': original_filename,
+                'mime_type': mime_type,
                 'room_id': room_id,
                 'is_read': is_read,
             }))

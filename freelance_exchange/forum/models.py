@@ -68,6 +68,8 @@ class Comment(models.Model):
 
 class UploadedFileScan(models.Model):
     file_path = models.CharField(max_length=500, verbose_name='Путь')
+    original_filename = models.CharField(max_length=255, blank=True, null=True)
+    mime_type = models.CharField(max_length=100, blank=True, null=True)
     analysis_id = models.CharField(max_length=200, null=True, blank=True)
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Ожидание'),

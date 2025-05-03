@@ -1,3 +1,4 @@
+import mimetypes
 import time
 import uuid
 import logging
@@ -148,16 +149,25 @@ class FileUploadView(generics.CreateAPIView):
         saved_path = default_storage.save(path, ContentFile(file.read()))
         file_url = default_storage.url(saved_path)
 
+        original_filename = file.name
+
+        mime_type, _ = mimetypes.guess_type(original_filename)
+        mime_type = mime_type or 'application/octet-stream'
+
         if ext in self.SAFE_EXTENSIONS:
             scan = UploadedFileScan.objects.create(
                 file_path=saved_path,
                 status="safe",
-                was_deleted=False
+                was_deleted=False,
+                original_filename=original_filename,
+                mime_type=mime_type
             )
         else:
             scan = UploadedFileScan.objects.create(
                 file_path=saved_path,
-                status="pending"
+                status="pending",
+                original_filename=original_filename,
+                mime_type=mime_type
             )
 
             start_file_scan_virustotal.delay(scan.id, file.name, saved_path)
@@ -170,7 +180,9 @@ class FileUploadView(generics.CreateAPIView):
             'file_path': saved_path,
             'scan_status': scan.status,
             'scan_id': scan.id,
-            'was_deleted': scan.was_deleted
+            'was_deleted': scan.was_deleted,
+            'original_filename': original_filename,
+            'mime_type': mime_type
         }, status=status.HTTP_201_CREATED)
 
 
