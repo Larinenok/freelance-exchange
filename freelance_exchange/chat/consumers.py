@@ -146,13 +146,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
 
-            if isinstance(message_data.get("message"), str):
-                content = message_data["message"]
-                file_path = None
-            else:
-                content = message_data["message"].get("content", "")
-                file_path = message_data["message"].get("file")
+            # if isinstance(message_data.get("message"), str):
+            #     content = message_data["message"]
+            #     file_path = None
+            # else:
+            #     content = message_data["message"].get("content", "")
+            #     file_path = message_data["message"].get("file")
+            content = message_data.get("message", "")
+            file_path = message_data.get("file")
 
+            logger.info(f"Received content from client: {content}")
             logger.info(f"Received file_path from client: {file_path}")
 
             message = await save_message(room, sender, content, file_path)
