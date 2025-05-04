@@ -8,7 +8,7 @@ from .models import ChatRoom, Message
 from users.models import CustomUser
 from ads.models import Ad
 from forum.models import UploadedFileScan
-from forum.models import format_file_size
+from forum.utils import format_file_size
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
