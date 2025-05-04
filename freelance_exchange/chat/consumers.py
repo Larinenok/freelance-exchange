@@ -11,6 +11,7 @@ import mimetypes
 from .models import ChatRoom, Message
 import logging
 from forum.models import UploadedFileScan
+from forum.utils import format_file_size
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -167,6 +168,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender_data = await get_sender_data(sender)
             file_url = await get_file_url(message)
 
+            file_size = None
+            formatted_file_size = None
+
+            if message.file:
+                try:
+                    file_size = message.file.size
+                    formatted_file_size = format_file_size(file_size)
+                except Exception as e:
+                    logger.warning(f"Failed to get file size: {e}")
+
             logger.info(f"message.file: {message.file}")
             logger.info(f"file_path: {file_path}")
             logger.info(f"file url: {file_url}")
@@ -182,6 +193,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'file': file_url,
                     'original_filename': original_filename,
                     'mime_type': mime_type,
+                    'file_size': file_size,
+                    'formatted_file_size': formatted_file_size,
                     'is_read': False,
                     'room_id': room_id
                 }
@@ -223,6 +236,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             room_id = event.get('room_id')
             original_filename = event.get('original_filename')
             mime_type = event.get('mime_type')
+            file_size = event.get('file_size')
+            formatted_file_size = event.get('formatted_file_size')
 
             current_user = self.scope['user']
             is_read = False
@@ -237,6 +252,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'file': file_url,
                 'original_filename': original_filename,
                 'mime_type': mime_type,
+                'file_size': file_size,
+                'formatted_file_size': formatted_file_size,
                 'room_id': room_id,
                 'is_read': is_read,
             }))

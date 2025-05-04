@@ -8,6 +8,7 @@ from .models import ChatRoom, Message
 from users.models import CustomUser
 from ads.models import Ad
 from forum.models import UploadedFileScan
+from forum.models import format_file_size
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -23,10 +24,12 @@ class MessageSerializer(serializers.ModelSerializer):
     file = serializers.FileField(use_url=True, required=False)
     original_filename = serializers.SerializerMethodField()
     mime_type = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    formatted_file_size = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
-        fields = ('id', 'room', 'sender', 'content', 'file', 'original_filename', 'mime_type', 'created_at', 'updated_at', 'is_read')
+        fields = ('id', 'room', 'sender', 'content', 'file', 'original_filename', 'mime_type', 'file_size', 'formatted_file_size', 'created_at', 'updated_at', 'is_read')
 
     def get_original_filename(self, obj):
         if obj.file:
@@ -39,6 +42,17 @@ class MessageSerializer(serializers.ModelSerializer):
             scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
             return scan.mime_type if scan else None
         return None
+
+    def get_file_size(self, obj):
+        if obj.file:
+            try:
+                return obj.file.size
+            except Exception:
+                return None
+        return None
+
+    def get_formatted_file_size(self, obj):
+        return format_file_size(self.get_file_size(obj))
 
 
 class AdSerializer(serializers.ModelSerializer):

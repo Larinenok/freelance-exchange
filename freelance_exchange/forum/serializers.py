@@ -6,6 +6,7 @@ from django.utils.text import slugify
 from rest_framework import serializers
 from .models import Discussion, Comment, comment_file_upload_path, discussion_file_upload_path, UploadedFileScan
 from users.models import CustomUser
+from .utils import format_file_size
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -19,10 +20,12 @@ class CommentSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(read_only=True)
     original_filename = serializers.SerializerMethodField()
     mime_type = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    formatted_file_size = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ('id', 'content', 'author', 'created_at', 'file', 'original_filename', 'mime_type')
+        fields = ('id', 'content', 'author', 'created_at', 'file', 'original_filename', 'file_size', 'formatted_file_size', 'mime_type')
 
     def get_original_filename(self, obj):
         if obj.file:
@@ -35,6 +38,17 @@ class CommentSerializer(serializers.ModelSerializer):
             scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
             return scan.mime_type if scan else None
         return None
+
+    def get_file_size(self, obj):
+        if obj.file:
+            try:
+                return obj.file.size
+            except Exception:
+                return None
+        return None
+
+    def get_formatted_file_size(self, obj):
+        return format_file_size(self.get_file_size(obj))
 
 
 class DiscussionSerializer(serializers.ModelSerializer):
@@ -43,10 +57,12 @@ class DiscussionSerializer(serializers.ModelSerializer):
     resolved_comment = CommentSerializer(read_only=True)
     original_filename = serializers.SerializerMethodField()
     mime_type = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    formatted_file_size = serializers.SerializerMethodField()
 
     class Meta:
         model = Discussion
-        fields = ('id', 'title', 'slug', 'description', 'file', 'original_filename', 'mime_type', 'created_at', 'status', 'author', 'comments', 'resolved_comment')
+        fields = ('id', 'title', 'slug', 'description', 'file', 'original_filename', 'file_size', 'formatted_file_size', 'mime_type', 'created_at', 'status', 'author', 'comments', 'resolved_comment')
 
     def get_original_filename(self, obj):
         if obj.file:
@@ -59,6 +75,17 @@ class DiscussionSerializer(serializers.ModelSerializer):
             scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
             return scan.mime_type if scan else None
         return None
+
+    def get_file_size(self, obj):
+        if obj.file:
+            try:
+                return obj.file.size
+            except Exception:
+                return None
+        return None
+
+    def get_formatted_file_size(self, obj):
+        return format_file_size(self.get_file_size(obj))
 
 
 class DiscussionCreateSerializer(serializers.ModelSerializer):
