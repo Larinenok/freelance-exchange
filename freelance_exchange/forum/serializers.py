@@ -90,6 +90,11 @@ class DiscussionCreateSerializer(serializers.ModelSerializer):
 
                 discussion.file.save(filename, ContentFile(content))
 
+                scan = UploadedFileScan.objects.filter(file_path=file_path).first()
+                if scan:
+                    scan.file_path = discussion.file.name
+                    scan.save()
+
                 default_storage.delete(file_path)
 
         return discussion
@@ -122,6 +127,11 @@ class CommentCreateSerializer(serializers.ModelSerializer):
                 filename = f"{uuid.uuid4()}.{ext}"
 
                 comment.file.save(filename, ContentFile(content))
+
+                scan = UploadedFileScan.objects.filter(file_path=file_path).first()
+                if scan:
+                    scan.file_path = comment.file.name
+                    scan.save()
 
                 default_storage.delete(file_path)
 
