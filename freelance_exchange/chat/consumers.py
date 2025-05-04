@@ -10,6 +10,7 @@ from django.core.files.storage import default_storage
 import mimetypes
 from .models import ChatRoom, Message
 import logging
+from forum.models import UploadedFileScan
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -47,6 +48,12 @@ def save_message(room, sender, content, file_path=None):
                 filename = f"{uuid.uuid4()}.{ext}"
 
                 message.file.save(filename, ContentFile(file_data))
+
+                scan = UploadedFileScan.objects.filter(file_path=file_path).first()
+                if scan:
+                    scan.file_path = message.file.name
+                    scan.save()
+
                 default_storage.delete(file_path)
 
             else:
@@ -138,13 +145,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             content = message_data.get("message", "")
             file_path = message_data.get("file")
-            original_filename = message_data.get("original_name")
-            mime_type = message_data.get("mime_type")
+            # original_filename = message_data.get("original_name")
+            # mime_type = message_data.get("mime_type")
 
             logger.info(f"Received content from client: {content}")
             logger.info(f"Received file_path from client: {file_path}")
 
             message = await save_message(room, sender, content, file_path)
+
+            original_filename = None
+            mime_type = None
+
+            if message.file:
+                scan = await database_sync_to_async(
+                    lambda: UploadedFileScan.objects.filter(file_path=message.file.name).first()
+                )()
+                if scan:
+                    original_filename = scan.original_filename
+                    mime_type = scan.mime_type
 
             sender_data = await get_sender_data(sender)
             file_url = await get_file_url(message)

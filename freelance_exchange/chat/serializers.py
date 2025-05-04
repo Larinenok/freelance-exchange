@@ -111,7 +111,7 @@ class MessageCreateSerializer(serializers.ModelSerializer):
             room=room,
             content=content
         )
-        message.save()
+        # message.save()
 
         if file_path and default_storage.exists(file_path):
             with default_storage.open(file_path, 'rb') as old_file:
@@ -120,6 +120,11 @@ class MessageCreateSerializer(serializers.ModelSerializer):
             ext = file_path.split('.')[-1]
             filename = f"{uuid.uuid4()}.{ext}"
             message.file.save(filename, ContentFile(file_content))
+
+            scan = UploadedFileScan.objects.filter(file_path=file_path).first()
+            if scan:
+                scan.file_path = message.file.name
+                scan.save()
 
             default_storage.delete(file_path)
 
