@@ -7,6 +7,7 @@ from rest_framework import serializers
 from .models import ChatRoom, Message
 from users.models import CustomUser
 from ads.models import Ad
+from forum.models import UploadedFileScan
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -20,10 +21,24 @@ class MessageSerializer(serializers.ModelSerializer):
     sender = CustomUserSerializer()
     room = serializers.PrimaryKeyRelatedField(queryset=ChatRoom.objects.all())
     file = serializers.FileField(use_url=True, required=False)
+    original_filename = serializers.SerializerMethodField()
+    mime_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
-        fields = ('id', 'room', 'sender', 'content', 'file', 'created_at', 'updated_at', 'is_read')
+        fields = ('id', 'room', 'sender', 'content', 'file', 'original_filename', 'mime_type', 'created_at', 'updated_at', 'is_read')
+
+    def get_original_filename(self, obj):
+        if obj.file:
+            scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
+            return scan.original_filename if scan else None
+        return None
+
+    def get_mime_type(self, obj):
+        if obj.file:
+            scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
+            return scan.mime_type if scan else None
+        return None
 
 
 class AdSerializer(serializers.ModelSerializer):

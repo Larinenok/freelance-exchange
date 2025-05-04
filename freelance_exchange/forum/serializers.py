@@ -17,20 +17,48 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(read_only=True)
+    original_filename = serializers.SerializerMethodField()
+    mime_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ('id', 'content', 'author', 'created_at', 'file')
+        fields = ('id', 'content', 'author', 'created_at', 'file', 'original_filename', 'mime_type')
+
+    def get_original_filename(self, obj):
+        if obj.file:
+            scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
+            return scan.original_filename if scan else None
+        return None
+
+    def get_mime_type(self, obj):
+        if obj.file:
+            scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
+            return scan.mime_type if scan else None
+        return None
 
 
 class DiscussionSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     resolved_comment = CommentSerializer(read_only=True)
+    original_filename = serializers.SerializerMethodField()
+    mime_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Discussion
-        fields = ('id', 'title', 'slug', 'description', 'file', 'created_at', 'status', 'author', 'comments', 'resolved_comment')
+        fields = ('id', 'title', 'slug', 'description', 'file', 'original_filename', 'mime_type', 'created_at', 'status', 'author', 'comments', 'resolved_comment')
+
+    def get_original_filename(self, obj):
+        if obj.file:
+            scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
+            return scan.original_filename if scan else None
+        return None
+
+    def get_mime_type(self, obj):
+        if obj.file:
+            scan = UploadedFileScan.objects.filter(file_path__icontains=obj.file.name).first()
+            return scan.mime_type if scan else None
+        return None
 
 
 class DiscussionCreateSerializer(serializers.ModelSerializer):
