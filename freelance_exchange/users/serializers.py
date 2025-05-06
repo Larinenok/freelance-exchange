@@ -334,6 +334,10 @@ class UserListForUsersSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
     skills = serializers.StringRelatedField(many=True)
     birth_date = serializers.DateField(format='%d.%m.%Y', input_formats=['%d.%m.%Y', ])
+    stars = serializers.SerializerMethodField()
+
+    def get_stars(self, obj):
+        return round(obj.stars or 0, 2)
 
     class Meta:
         model = CustomUser
