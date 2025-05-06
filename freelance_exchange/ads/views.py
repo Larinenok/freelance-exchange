@@ -105,8 +105,13 @@ class AdListCreateView(generics.ListCreateAPIView):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def create(self, request, *args, **kwargs):
+        create_serializer = self.get_serializer(data=request.data)
+        create_serializer.is_valid(raise_exception=True)
+        ad = create_serializer.save(author=request.user)
+
+        response_serializer = AdGetSerializer(ad, context={'request': request})
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -144,74 +149,11 @@ class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
         return ad
 
 
-class AdFileUploadView(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-    serializer_class = AdFileUploadSerializer
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('ad_id', in_=openapi.IN_FORM, type=openapi.TYPE_INTEGER, description='ID of the Ad', required=True),
-            openapi.Parameter('files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, description='Files to upload', required=True, multiple=True),
-        ]
-    )
-    def post(self, request, *args, **kwargs):
-        user = request.user
-
-        # Проверка авторизации
-        if not user or not user.is_authenticated:
-            return Response({'error': 'You must be authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # Получаем ad_id и проверяем его наличие
-        ad_id = request.data.get('ad_id')
-        if not ad_id:
-            return Response({'error': 'ad_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Получаем объявление
-        ad = get_object_or_404(Ad, id=ad_id)
-
-        # Проверка прав пользователя
-        if ad.author != user and not user.is_superuser:
-            return Response({'error': 'You must be the author or a superuser'}, status=status.HTTP_403_FORBIDDEN)
-
-        # Получаем файлы из запроса
-        files = request.FILES.getlist('files')
-        if not files:
-            return Response({'error': 'At least one file is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Создаем файлы через сериализатор
-        serializer = self.serializer_class(data={'files': files})
-        if serializer.is_valid():
-            ad_files = serializer.save()
-
-            # Привязываем загруженные файлы к объявлению
-            for ad_file in ad_files:
-                ad.files.add(ad_file)
-
-            return Response({'message': 'Files added successfully'}, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class AdFileListView(generics.ListAPIView):
     queryset = AdFile.objects.all()
     serializer_class = AdFileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class AdFileDeleteView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'file_id': openapi.Schema(type=openapi.TYPE_INTEGER),
-        }
-    ))
-    def delete(self, request, *args, **kwargs):
-        file_id = request.query_params.get('file_id')
-        if not file_id:
-            return Response({'error': 'File ID is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        file = get_object_or_404(AdFile, id=file_id)
-        file.delete()
-        return Response({'message': 'File deleted successfully'}, status=status.HTTP_200_OK)
 
 class AdResponseView(APIView):
     permission_classes = [permissions.IsAuthenticated]

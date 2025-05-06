@@ -205,7 +205,7 @@ class DiscussionMarkCommentSerializer(serializers.ModelSerializer):
 
 class FileUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
-    type = serializers.type = serializers.ChoiceField(choices=['chat', 'discussion', 'comment'], required=True)
+    type = serializers.type = serializers.ChoiceField(choices=['chat', 'discussion', 'comment', 'ad'], required=True)
 
 
 class UploadedFileScanSerializer(serializers.ModelSerializer):

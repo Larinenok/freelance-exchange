@@ -31,8 +31,11 @@ class AdAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+@admin.register(AdFile)
 class AdFileAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id', 'ad', 'file', 'scan')
+    search_fields = ('ad__title', 'file')
+    list_filter = ('ad',)
 
 
 class AdResponseAdmin(admin.ModelAdmin):
@@ -54,5 +57,4 @@ class CategoriesAdmin(admin.ModelAdmin):
 admin.site.register(Categories, CategoriesAdmin)
 admin.site.register(Types, TypesAdmin)
 admin.site.register(Ad, AdAdmin)
-admin.site.register(AdFile, AdFileAdmin)
 admin.site.register(AdResponse, AdResponseAdmin)

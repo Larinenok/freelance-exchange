@@ -143,6 +143,8 @@ class FileUploadView(generics.CreateAPIView):
             path = f"temp_upload/forum/{filename}"
         elif upload_type == "comment":
             path = f"temp_upload/forum/comment/{filename}"
+        elif upload_type == "ad":
+            path = f"temp_upload/ad/{filename}"
         else:
             return Response({'error': "Неверный тип загрузки."}, status=status.HTTP_400_BAD_REQUEST)
 
