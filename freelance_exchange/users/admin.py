@@ -8,6 +8,7 @@ from .models import *
 class CustomUserAdmin(UserAdmin):
     list_display = ['username', 'email', 'first_name', 'last_name']
     list_display_links = ['email', 'username']
+    readonly_fields = ['stars']
     add_fieldsets = (
         *UserAdmin.add_fieldsets,
         (
