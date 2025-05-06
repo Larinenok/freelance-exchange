@@ -103,7 +103,7 @@ services:
     build:
       context: .
       dockerfile: config/django/flower.Dockerfile
-    command: ["celery", "-A", "freelance_exchange", "flower", "--port=5555"]
+    command: ["celery", "-A", "freelance_exchange", "flower", "--port=5555", "--url-prefix=/flower"]
     ports:
       - "5555:5555"
     depends_on:

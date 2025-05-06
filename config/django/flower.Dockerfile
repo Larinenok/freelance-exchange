@@ -20,4 +20,4 @@ COPY . .
 
 ENV PYTHONPATH=/app/freelance_exchange
 
-CMD ["celery", "-A", "freelance_exchange", "flower"]
+CMD ["celery", "-A", "freelance_exchange", "flower", "--port=5555", "--url-prefix=/flower"]
