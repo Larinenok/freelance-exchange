@@ -38,8 +38,7 @@ class CustomUserAdmin(UserAdmin):
                     'language',
                     'views',
                     'is_approved',
-                    #'stars_freelancer',
-                    #'stars_customer'
+                    'stars'
                 )
             }
         )
