@@ -85,7 +85,7 @@ class CustomUser(AbstractUser):
     description = models.TextField(default='', blank=True, verbose_name='Описание')
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name='Язык')
     views = models.ManyToManyField(Ip, blank=True, verbose_name='Просмотры профиля')
-    stars = models.FloatField(null=True, blank=True, verbose_name='Рейтинг')
+    # stars = models.FloatField(null=True, blank=True, verbose_name='Рейтинг')
     is_approved = models.BooleanField(default=False, verbose_name='Подтвержден')
 
     def clean(self):
