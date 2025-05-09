@@ -32,7 +32,7 @@ class Message(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='messages')
     content = models.TextField(verbose_name='Контент')
-    file = models.FileField(upload_to=chat_file_upload_path, blank=True, null=True, verbose_name='Прикрепленный файл')
+    file = models.FileField(upload_to=chat_file_upload_path, blank=True, null=True, verbose_name='Прикрепленный файл', max_length=511)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Время отправки')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
     is_read = models.BooleanField(default=False, verbose_name='Прочитано')

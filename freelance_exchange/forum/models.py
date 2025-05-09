@@ -18,7 +18,7 @@ class Discussion(models.Model):
 
     title = models.CharField(max_length=255, verbose_name='Название')
     description = models.TextField(verbose_name='Описание')
-    file = models.FileField(upload_to=discussion_file_upload_path, blank=True, null=True, verbose_name='Прикрепленный файл')
+    file = models.FileField(upload_to=discussion_file_upload_path, blank=True, null=True, verbose_name='Прикрепленный файл', max_length=511)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Время создания обсуждения')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open', verbose_name='Статус')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='discussions', verbose_name='Автор обсуждения')
@@ -55,7 +55,7 @@ class Comment(models.Model):
     content = models.TextField(verbose_name='Контент комментария')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments', verbose_name='Автор комментария')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата и время комментария')
-    file = models.FileField(upload_to=comment_file_upload_path, blank=True, null=True, verbose_name='Файл комментария')
+    file = models.FileField(upload_to=comment_file_upload_path, blank=True, null=True, verbose_name='Файл комментария', max_length=511)
 
     class Meta:
         verbose_name = 'Комментарий'

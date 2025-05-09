@@ -8,7 +8,7 @@ from forum.models import UploadedFileScan
 
 
 class Types(models.Model):
-    name = models.CharField(max_length=255, verbose_name='Виды')
+    name = models.CharField(max_length=255, verbose_name='Типы работ')
 
     class Meta:
         verbose_name = 'Вид'
@@ -95,7 +95,7 @@ def ad_file_upload_path(instance, filename):
 
 class AdFile(models.Model):
     ad = models.ForeignKey(Ad, on_delete=models.CASCADE, related_name='files', verbose_name='Объявление')
-    file = models.FileField(upload_to=ad_file_upload_path, verbose_name='Файл')
+    file = models.FileField(upload_to=ad_file_upload_path, verbose_name='Файл', max_length=511)
     scan = models.OneToOneField(UploadedFileScan, on_delete=models.SET_NULL, null=True, blank=True)
 
     def delete(self, *args, **kwargs):
