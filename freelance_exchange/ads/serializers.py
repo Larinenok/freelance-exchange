@@ -167,6 +167,14 @@ class AdCreateSerializer(serializers.ModelSerializer):
 
         return instance
 
+    def validate_budget(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Бюджет должен быть положительным числом")
+        if value > 100_000_000:
+            raise serializers.ValidationError("Слишком большой бюджет — максимум 100 млн")
+        return value
+
+
 
 class AdResponseSerializer(serializers.ModelSerializer):
     responder = UserResponseSerializer(read_only=True)

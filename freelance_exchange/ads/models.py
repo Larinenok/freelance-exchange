@@ -5,6 +5,7 @@ from users.models import CustomUser
 from pytils.translit import slugify
 import os.path
 from forum.models import UploadedFileScan
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Types(models.Model):
@@ -37,7 +38,13 @@ class Ad(models.Model):
     id = models.AutoField(primary_key=True)
     slug = models.SlugField(max_length=210, unique=False, null=True)
     description = models.TextField(verbose_name='Описание')
-    budget = models.IntegerField(verbose_name='Бюджет')
+    budget = models.IntegerField(
+        verbose_name='Бюджет',
+        validators=[
+            MinValueValidator(1, message="Бюджет должен быть положительным"),
+            MaxValueValidator(100_000_000, message="Слишком большой бюджет — ограничение 100 млн")
+        ]
+    )
     deadlineStartAt = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     deadlineEndAt = models.DateTimeField(verbose_name='Дедлайн', null=True)
     contact_info = models.CharField(max_length=200, verbose_name='Контактная информация')

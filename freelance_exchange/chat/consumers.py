@@ -124,20 +124,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        await self.channel_layer.group_add(
-            f"user_{self.scope['user'].id}",
-            self.channel_name
-        )
 
         await self.accept()
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.room_group_name,
-            self.channel_name
-        )
-        await self.channel_layer.group_discard(
-            f"user_{self.scope['user'].id}",
             self.channel_name
         )
 
