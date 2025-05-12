@@ -124,6 +124,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        await self.channel_layer.group_add(
+            f"user_{self.scope['user'].id}",
+            self.channel_name
+        )
 
         await self.accept()
 
@@ -132,13 +136,37 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        await self.channel_layer.group_discard(
+            f"user_{self.scope['user'].id}",
+            self.channel_name
+        )
 
     async def receive(self, text_data):
         try:
             message_data = json.loads(text_data)
+            msg_type = message_data.get("type")
+
+            if msg_type == "mark_as_read":
+                message_id = message_data.get("messageId")
+                success = await mark_message_as_read(message_id)
+
+                if success:
+                    message = await database_sync_to_async(Message.objects.get)(id=message_id)
+                    sender = message.sender
+
+                    await self.channel_layer.group_send(
+                        f"user_{sender.id}",
+                        {
+                            "type": "chat.read_status_update",
+                            "messageId": message.id,
+                            "is_read": True
+                        }
+                    )
+                return
+
+            # Handle standard chat message
             sender = self.scope['user']
             room_id = self.scope['url_route']['kwargs']['room_id']
-
             room = await get_chat_room(room_id)
             if not room:
                 await self.close()
@@ -146,17 +174,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             content = message_data.get("message", "")
             file_path = message_data.get("file")
-            # original_filename = message_data.get("original_name")
-            # mime_type = message_data.get("mime_type")
 
             logger.info(f"Received content from client: {content}")
             logger.info(f"Received file_path from client: {file_path}")
 
             message = await save_message(room, sender, content, file_path)
 
+            sender_data = await get_sender_data(sender)
+            file_url = await get_file_url(message)
+
             original_filename = None
             mime_type = None
-
             if message.file:
                 scan = await database_sync_to_async(
                     lambda: UploadedFileScan.objects.filter(file_path=message.file.name).first()
@@ -165,12 +193,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     original_filename = scan.original_filename
                     mime_type = scan.mime_type
 
-            sender_data = await get_sender_data(sender)
-            file_url = await get_file_url(message)
-
             file_size = None
             formatted_file_size = None
-
             if message.file:
                 try:
                     file_size = message.file.size
@@ -179,7 +203,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     logger.warning(f"Failed to get file size: {e}")
 
             logger.info(f"message.file: {message.file}")
-            logger.info(f"file_path: {file_path}")
             logger.info(f"file url: {file_url}")
 
             await self.channel_layer.group_send(
@@ -223,7 +246,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
 
         except Exception as e:
-            logger.error(f"WebSocket  receive error: {e}")
+            logger.error(f"WebSocket receive error: {e}")
             await self.close()
 
     async def chat_message(self, event):
@@ -260,6 +283,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         except Exception as e:
             logger.warning(f"Failed to send chat message to WebSocket: {e}")
+
+    async def chat_read_status_update(self, event):
+        try:
+            await self.send(text_data=json.dumps({
+                'type': 'read_status_update',
+                'messageId': event['messageId'],
+                'is_read': event['is_read']
+            }))
+        except Exception as e:
+            logger.warning(f"Failed to send read status update: {e}")
+
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
