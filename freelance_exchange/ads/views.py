@@ -135,7 +135,7 @@ class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
             .prefetch_related('type', 'category', 'files', 'responders', 'chat_rooms')
 
     def get_serializer_class(self):
-        if self.request.method != 'GET':
+        if self.request.method in ['POST', 'PUT', 'PATCH']:
             return AdCreateSerializer
         return AdGetSerializer
 
@@ -144,9 +144,18 @@ class AdDetailView(generics.RetrieveUpdateDestroyAPIView):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
-    def get_object(self):
-        ad = super().get_object()
-        return ad
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=False)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        read_serializer = AdGetSerializer(instance, context={'request': request})
+        return Response(read_serializer.data)
+
+    # def get_object(self):
+    #     ad = super().get_object()
+    #     return ad
 
 
 class AdFileListView(generics.ListAPIView):

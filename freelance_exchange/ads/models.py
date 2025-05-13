@@ -43,7 +43,8 @@ class Ad(models.Model):
         validators=[
             MinValueValidator(1, message="Бюджет должен быть положительным"),
             MaxValueValidator(100_000_000, message="Слишком большой бюджет — ограничение 100 млн")
-        ]
+        ],
+        blank=True, null=True
     )
     deadlineStartAt = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     deadlineEndAt = models.DateTimeField(verbose_name='Дедлайн', null=True)
