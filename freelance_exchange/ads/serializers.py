@@ -65,6 +65,8 @@ class UserResponseSerializer(serializers.ModelSerializer):
 
 class AdCreateSerializer(serializers.ModelSerializer):
     files = serializers.ListField(child=serializers.CharField(), required=False)
+    type = serializers.PrimaryKeyRelatedField(queryset=Types.objects.all(), many=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=Categories.objects.all(), many=True)
 
     def generate_unique_order_number(self):
         while True:
