@@ -240,7 +240,7 @@ class PasswordResetConfirmView(APIView):
 
 class UserProfileView(RetrieveAPIView):
     serializer_class = DetailUserProfile
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     queryset = CustomUser.objects.all()
     lookup_field = 'slug'
 
