@@ -147,7 +147,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     sender = message.sender
 
                     await self.channel_layer.group_send(
-                        f"user_{sender.id}",
+                        f"chat_{self.room_id}",
                         {
                             "type": "chat.read_status_update",
                             "messageId": message.id,
