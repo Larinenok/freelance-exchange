@@ -221,7 +221,22 @@ class AdExecutorView(APIView):
         ad.status = Ad.IN_PROGRESS
         ad.save()
 
-        return Response({'message': 'Executor set successfully'}, status=status.HTTP_200_OK)
+        chat_room = self.get_or_create_chat(ad=ad, user1=ad.author, user2=response.responder)
+
+        return Response({
+            'message': 'Executor set successfully',
+            'chat_id': chat_room.id
+        }, status=status.HTTP_200_OK)
+
+    def get_or_create_chat(self, ad, user1, user2):
+        existing_chat = ChatRoom.objects.filter(ad=ad, participants=user1).filter(participants=user2).first()
+        if existing_chat:
+            return existing_chat
+
+        chat_room = ChatRoom.objects.create(ad=ad)
+        chat_room.participants.add(user1, user2)
+        return chat_room
+
 
 class UserAdsView(generics.ListAPIView):
     serializer_class = AdGetSerializer
