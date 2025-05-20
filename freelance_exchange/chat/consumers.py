@@ -287,10 +287,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.warning(f"Failed to send read status update: {e}")
 
 
-
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
+        logger.info(f"User {self.user.username} connected to notification channel.")
         if self.user.is_anonymous:
             await self.close()
             return
