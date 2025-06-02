@@ -90,10 +90,11 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
 class DiscussionCreateSerializer(serializers.ModelSerializer):
     file = serializers.CharField(required=False, allow_blank=True)
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Discussion
-        fields = ('title', 'description', 'file')
+        fields = ('id', 'title', 'description', 'file')
 
     def create(self, validated_data):
         user = self.context['request'].user
