@@ -8,7 +8,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.utils import timezone
 from pytils.translit import slugify
-
+from stars.serializers import ChangeStarSerializer
 from .models import Ad, AdFile, AdResponse
 from .serializers import *
 from chat.models import ChatRoom
@@ -298,22 +298,24 @@ class CloseAdView(APIView):
 class CompleteAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'ad_id': openapi.Schema(type=openapi.TYPE_INTEGER),
-        }
-    ))
-    def post(self, request, *args, **kwargs):
-        ad_id = request.data.get('ad_id')
-
-        if not ad_id:
-            return Response({'error': 'Ad ID is required'}, status=status.HTTP_400_BAD_REQUEST)
-
+    @swagger_auto_schema(request_body=ChangeStarSerializer)
+    def post(self, request, ad_id, *args, **kwargs):
         ad = get_object_or_404(Ad, id=ad_id)
 
         if ad.author != request.user and not request.user.is_superuser:
             return Response({'error': 'Вы должны быть автором'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not ad.executor:
+            return Response({'error': 'Невозможно завершить заказ без назначенного исполнителя'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        review_data = request.data.copy()
+        review_data['ad_id'] = ad.id
+        review_data['target_username'] = ad.executor.username
+
+        serializer = ChangeStarSerializer(data=review_data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         ad.status = Ad.COMPLETED
         ad.closed_date = timezone.now()
@@ -321,7 +323,7 @@ class CompleteAdView(APIView):
 
         ChatRoom.objects.filter(ad=ad).update(is_closed=True)
 
-        return Response({'message': 'Объявление помечено как выполнено. Чат закрыт.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Объявление помечено как выполнено, чат закрыт, отзыв сохранён..'}, status=status.HTTP_200_OK)
 
 class DeleteAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]
