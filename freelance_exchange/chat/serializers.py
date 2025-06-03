@@ -70,11 +70,12 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     created_at = serializers.SerializerMethodField()
     interlocutor = serializers.SerializerMethodField()
     is_closed = serializers.BooleanField()
+    admin_requested = serializers.BooleanField()
     ad = AdSerializer()
 
     class Meta:
         model = ChatRoom
-        fields = ['id', 'participants', 'interlocutor', 'created_at', 'last_message', 'messages', 'created_chat_at', 'is_closed', 'ad']
+        fields = ['id', 'participants', 'interlocutor', 'created_at', 'last_message', 'messages', 'created_chat_at', 'is_closed', 'ad', 'admin_requested']
 
     def get_messages(self, obj):
         messages = obj.messages.all().order_by('created_at')
@@ -198,4 +199,10 @@ class AddParticipantsSerializer(serializers.ModelSerializer):
 
         instance.participants.add(*participants)
         return instance
+
+
+class RequestAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatRoom
+        fields = []
 

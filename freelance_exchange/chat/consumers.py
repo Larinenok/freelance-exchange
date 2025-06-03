@@ -125,13 +125,42 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+        if self.scope['user'].is_staff and self.scope['user'] not in self.room.participants.all():
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat.system_message",
+                    "event_type": "admin_joined",
+                    "message": "Администратор подключился к чату",
+                    "room_id": self.room.id,
+                }
+            )
+
         await self.accept()
 
     async def disconnect(self, close_code):
+        if self.scope['user'].is_staff and self.scope['user'] not in self.room.participants.all():
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat.system_message",
+                    "event_type": "admin_left",
+                    "message": "Администратор покинул чат",
+                    "room_id": self.room.id,
+                }
+            )
+
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+
+    async def chat_system_message(self, event):
+        await self.send(text_data=json.dumps({
+            'type': event['event_type'],
+            'message': event['message'],
+            'room_id': event['room_id']
+        }))
 
     async def receive(self, text_data):
         try:

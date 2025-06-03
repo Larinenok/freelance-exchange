@@ -10,6 +10,7 @@ class ChatRoom(models.Model):
     ad = models.ForeignKey('ads.Ad', on_delete=models.CASCADE, related_name='chat_rooms')
     created_chat_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания чата')
     is_closed = models.BooleanField(default=False, verbose_name='Чат закрыт')
+    admin_requested = models.BooleanField(default=False, verbose_name='Запрошен администратор')
 
     class Meta:
         verbose_name_plural = 'Комнаты'

@@ -3,8 +3,10 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView, ListCreateAPIView
 from .serializers import MessageCreateSerializer, MessageSerializer, ChatCreateSerializer, ChatRoomSerializer, \
-    AddParticipantsSerializer
+    AddParticipantsSerializer, RequestAdminSerializer
 from .models import ChatRoom, Message
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 class MessageListCreateView(ListCreateAPIView):
@@ -127,3 +129,40 @@ class CloseChatView(UpdateAPIView):
         chat.is_closed = True
         chat.save()
         return Response({'detail': 'Чат успешно закрыт.'}, status=status.HTTP_200_OK)
+
+
+class RequestAdminToChatView(UpdateAPIView):
+    queryset = ChatRoom.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = RequestAdminSerializer
+    lookup_field = 'id'
+
+    def update(self, request, *args, **kwargs):
+        chat = self.get_object()
+
+        if request.user not in chat.participants.all():
+            return Response({'detail': 'Вы не участник чата.'}, status=status.HTTP_403_FORBIDDEN)
+
+        chat.admin_requested = True
+        chat.save()
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{chat.id}",
+            {
+                "type": "chat.system_message",
+                "event_type": "admin_requested",
+                "message": "Пользователи запросили администратора",
+                "room_id": chat.id,
+            }
+        )
+
+        return Response({'detail': 'Администратор запрошен'}, status=status.HTTP_200_OK)
+
+
+class AdminRequestedChatsView(ListAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = ChatRoomSerializer
+
+    def get_queryset(self):
+        return ChatRoom.objects.filter(admin_requested=True, is_closed=False)
