@@ -8,7 +8,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.utils import timezone
 from pytils.translit import slugify
-from stars.serializers import ChangeStarSerializer
+from stars.serializers import CompleteAdStarSerializer
 from .models import Ad, AdFile, AdResponse
 from .serializers import *
 from chat.models import ChatRoom
@@ -298,14 +298,16 @@ class CloseAdView(APIView):
 class CompleteAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        required=['count'],
-        properties={
-            'count': openapi.Schema(type=openapi.TYPE_INTEGER),
-            'message': openapi.Schema(type=openapi.TYPE_STRING),
-        }
-    ))
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['count'],
+            properties={
+                'count': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )
+    )
     def post(self, request, ad_id, *args, **kwargs):
         ad = get_object_or_404(Ad, id=ad_id)
 
@@ -316,7 +318,7 @@ class CompleteAdView(APIView):
             return Response({'error': 'Невозможно завершить заказ без назначенного исполнителя'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ChangeStarSerializer(
+        serializer = CompleteAdStarSerializer(
             data=request.data,
             context={
                 'request': request,

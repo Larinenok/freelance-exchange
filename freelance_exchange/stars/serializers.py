@@ -97,3 +97,48 @@ class UserStatsSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('id', 'username', 'first_name', 'last_name', 'slug', 'photo',
                   'average_rating', 'completed_ads_count')
+
+
+class CompleteAdStarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Star
+        fields = ('count', 'message')
+
+    def validate(self, data):
+        request = self.context.get('request')
+        ad = self.context.get('ad')
+        target = self.context.get('target')
+
+        if not ad or not target:
+            raise serializers.ValidationError('Отсутствует контекст выполнения.')
+
+        if request.user == target:
+            raise serializers.ValidationError('Нельзя оставить отзыв самому себе.')
+
+        if ad.author != request.user:
+            raise serializers.ValidationError('Вы не являетесь автором этого задания.')
+
+        if ad.executor != target:
+            raise serializers.ValidationError('Пользователь не является исполнителем этого задания.')
+
+        if Star.objects.filter(author=request.user, target=target, ad=ad).exists():
+            raise serializers.ValidationError('Вы уже оставили отзыв по этой задаче.')
+
+        return data
+
+    def create(self, validated_data):
+        request = self.context['request']
+        author = request.user
+        ad = self.context['ad']
+        target = self.context['target']
+
+        star = Star.objects.create(
+            author=author,
+            target=target,
+            ad=ad,
+            count=validated_data['count'],
+            message=validated_data.get('message', '')
+        )
+        update_user_rating(target)
+        return star
+
