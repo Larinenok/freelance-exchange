@@ -280,7 +280,11 @@ class CloseAdView(APIView):
         ad = get_object_or_404(Ad, id=ad_id)
 
         if ad.author != request.user and not request.user.is_superuser:
-            return Response({'error': 'You must be author'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'Вы должны быть автором'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if ad.executor:
+            return Response({'error': 'Нельзя закрыть объявление, когда выбран исполнитель'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         ad.status = Ad.CLOSED
         ad.closed_date = timezone.now()
@@ -288,7 +292,36 @@ class CloseAdView(APIView):
 
         ChatRoom.objects.filter(ad=ad).update(is_closed=True)
 
-        return Response({'message': 'Ad closed successfully and related chats were closed.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Объявление успешно закрыто.'}, status=status.HTTP_200_OK)
+
+
+class CompleteAdView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'ad_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+        }
+    ))
+    def post(self, request, *args, **kwargs):
+        ad_id = request.data.get('ad_id')
+
+        if not ad_id:
+            return Response({'error': 'Ad ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ad = get_object_or_404(Ad, id=ad_id)
+
+        if ad.author != request.user and not request.user.is_superuser:
+            return Response({'error': 'Вы должны быть автором'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        ad.status = Ad.COMPLETED
+        ad.closed_date = timezone.now()
+        ad.save()
+
+        ChatRoom.objects.filter(ad=ad).update(is_closed=True)
+
+        return Response({'message': 'Объявление помечено как выполнено. Чат закрыт.'}, status=status.HTTP_200_OK)
 
 class DeleteAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]

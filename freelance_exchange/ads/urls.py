@@ -19,6 +19,7 @@ from .views import (
     ExecutorArchiveView,
     CompletedAdsView,
     ExecutorStatsView,
+    CompleteAdView
 )
 
 urlpatterns = [
@@ -41,4 +42,5 @@ urlpatterns = [
     path('archive/executor/', ExecutorArchiveView.as_view(), name='executor-archive'),
     path('users/ads/completed/', CompletedAdsView.as_view(), name='user-completed-ads'),
     path('ads/executor/stats/', ExecutorStatsView.as_view(), name='count-ads-completed'),
+    path('complete-ads/', CompleteAdView.as_view(), name='complete-ad'),
 ]
