@@ -298,7 +298,14 @@ class CloseAdView(APIView):
 class CompleteAdView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(request_body=ChangeStarSerializer)
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['count'],
+        properties={
+            'count': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'message': openapi.Schema(type=openapi.TYPE_STRING),
+        }
+    ))
     def post(self, request, ad_id, *args, **kwargs):
         ad = get_object_or_404(Ad, id=ad_id)
 
@@ -309,11 +316,14 @@ class CompleteAdView(APIView):
             return Response({'error': 'Невозможно завершить заказ без назначенного исполнителя'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        review_data = request.data.copy()
-        review_data['ad_id'] = ad.id
-        review_data['target_username'] = ad.executor.username
-
-        serializer = ChangeStarSerializer(data=review_data, context={'request': request})
+        serializer = ChangeStarSerializer(
+            data=request.data,
+            context={
+                'request': request,
+                'ad': ad,
+                'target': ad.executor
+            }
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
