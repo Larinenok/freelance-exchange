@@ -102,6 +102,11 @@ def get_sender_data(user):
     }
 
 
+@database_sync_to_async
+def is_user_participant(room, user):
+    return room.participants.filter(id=user.id).exists()
+
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
@@ -125,7 +130,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        if self.scope['user'].is_staff and self.scope['user'] not in self.room.participants.all():
+        if self.scope['user'].is_staff and not await is_user_participant(self.room, self.scope['user']):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -139,7 +144,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        if self.scope['user'].is_staff and self.scope['user'] not in self.room.participants.all():
+        if self.scope['user'].is_staff and not await is_user_participant(self.room, self.scope['user']):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
